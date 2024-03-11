@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.app-container {
+  background-image: url('./images/backGround.jpeg'); /* Set the background image */
+  background-size: cover; /* Cover the entire container */
+  background-position: center; /* Center the image */
+  /* Add additional styles as needed */
+}
