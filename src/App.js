@@ -3,19 +3,31 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import LoginComponent from './components/LoginComponent';
 import SignupComponent from './components/SignupComponent';
 import './App.css'; // Import your CSS file
-
-import backgroundImage from './images/backGround.jpeg';
+import backgroundImg from './images/football.jpeg';
 
 const App = () => {
+    const appStyle = {
+        backgroundImage: `url(${backgroundImg})`, // Use the imported image
+        backgroundSize: 'cover', // Adjust as needed
+        backgroundPosition: 'center', // Adjust as needed
+        // Other styles for your component
+        width: '100vw', // Ensure full width of the screen
+        height: '100vh', // Ensure full height of the screen
+    };
+
+
+
     return (
-        <Router>
-            <div>
-                <Routes>
-                    <Route path="/" element={<LoginComponent />} />
-                    <Route path="/signup" element={<SignupComponent />} />
-                </Routes>
-            </div>
-        </Router>
+        <div className="App" style={appStyle}>
+            <Router>
+                <div className="app-container">
+                    <Routes>
+                        <Route path="http://localhost:8080/" element={<LoginComponent />} />
+                        <Route path="/signup" element={<SignupComponent />} />
+                    </Routes>
+                </div>
+            </Router>
+        </div>
     );
 };
 

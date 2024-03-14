@@ -1,5 +1,10 @@
 .App {
   text-align: center;
+  background-image: url('./images/football.jpeg');
+  backgroundSize: 'cover';
+  backgroundPosition: 'center';
+  width: 100vw;
+  height: 100vh;
 }
 
 .App-logo {
@@ -24,6 +29,27 @@
   color: white;
 }
 
+.overlay-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 200px;
+  transform: translate(-50%, -50%);
+  text-align: center; /* Center the content horizontally */
+  z-index: 1; /* Ensure the overlay container is above the background image */
+}
+
+.center-container {
+  background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent background */
+  padding: 20px; /* Add some padding */
+  border-radius: 10px; /* Add border radius */
+
+}
+
+.app-container {
+
+}
+
 .App-link {
   color: #61dafb;
 }
@@ -37,9 +63,4 @@
   }
 }
 
-.app-container {
-  background-image: url('./images/backGround.jpeg'); /* Set the background image */
-  background-size: cover; /* Cover the entire container */
-  background-position: center; /* Center the image */
-  /* Add additional styles as needed */
-}
+
