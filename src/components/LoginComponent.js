@@ -3,6 +3,8 @@ import './LoginComponent.css';
 import {Link} from "react-router-dom";
 import axios from "axios";
 
+
+
 const LoginComponent = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -28,8 +30,11 @@ const LoginComponent = () => {
             }});
             console.log('Login response:', response.data);
             if (response.data.success) {
+                console.log("good")
+                window.location.href = '/stream-page';
                 // Redirect to dashboard
             } else {
+                console.log("bad")
                 setError('Invalid username or password');
             }
         } catch (error) {

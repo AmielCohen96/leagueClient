@@ -5,6 +5,7 @@ import SignupComponent from './components/SignupComponent';
 import './App.css'; // Import your CSS file
 import backgroundImg from './images/football.jpeg';
 import LeagueTable from "./LeagueTable";
+import StreamPage from "./components/StreamPage";
 
 const App = () => {
     const appStyle = {
@@ -25,7 +26,7 @@ const App = () => {
                     <Routes>
                         <Route path="/" element={<LoginComponent />} />
                         <Route path="/signup" element={<SignupComponent />} />
-                        <Route path="/stream-page" element={<streamPage />} />
+                        <Route path="/stream-page" element={<StreamPage />} />
                     </Routes>
                 </div>
             </Router>
