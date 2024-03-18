@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import './LoginComponent.css';
 import {Link} from "react-router-dom";
+import axios from "axios";
 
 const LoginComponent = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleUsernameChange = (event) => {
         setUsername(event.target.value);
@@ -14,9 +16,27 @@ const LoginComponent = () => {
         setPassword(event.target.value);
     };
 
-    const handleSignIn = () => {
+    const handleSubmit = async (event) => {
         console.log('Username:', username);
         console.log('Password:', password);
+
+        event.preventDefault();
+        try {
+            const response = await axios.post('http://localhost:9124/login', null,{params: {
+                username,
+                password
+            }});
+            console.log('Login response:', response.data);
+            if (response.data.success) {
+                // Redirect to dashboard
+            } else {
+                setError('Invalid username or password');
+            }
+        } catch (error) {
+            console.error('Login failed:', error);
+            setError('Login failed. Please try again.');
+        }
+
     };
 
     const startWithoutSignIn = () => {
@@ -49,7 +69,7 @@ const LoginComponent = () => {
                 />
             </div>
             <div className="button-container">
-                <button onClick={handleSignIn}>Sign In</button>
+                <button onClick={handleSubmit}>Sign In</button>
                 <button onClick={handleSignUp}><Link to="/signup">Sign Up</Link></button>
                 <button onClick={startWithoutSignIn}><Link to="/stream page">Start with out Sign In</Link></button>
             </div>

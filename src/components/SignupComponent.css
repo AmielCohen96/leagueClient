@@ -47,7 +47,7 @@ form {
     text-align: center;
 }
 
-button {
+.sign-up-button{
     padding: 12px;
     border: none;
     border-radius: 5px;
@@ -61,4 +61,12 @@ button {
 
 button:hover {
     background-color: green;
+}
+
+.upper-left-button {
+    height: 50px;
+    width: 200px;
+
+
+
 }
