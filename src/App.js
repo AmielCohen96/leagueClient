@@ -4,6 +4,7 @@ import LoginComponent from './components/LoginComponent';
 import SignupComponent from './components/SignupComponent';
 import './App.css'; // Import your CSS file
 import backgroundImg from './images/football.jpeg';
+import LeagueTable from "./LeagueTable";
 
 const App = () => {
     const appStyle = {
@@ -22,8 +23,9 @@ const App = () => {
             <Router>
                 <div className="app-container">
                     <Routes>
-                        <Route path="http://localhost:8080/" element={<LoginComponent />} />
+                        <Route path="/" element={<LoginComponent />} />
                         <Route path="/signup" element={<SignupComponent />} />
+                        <Route path="/stream page" element={<LeagueTable />} />
                     </Routes>
                 </div>
             </Router>

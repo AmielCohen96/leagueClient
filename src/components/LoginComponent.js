@@ -51,7 +51,7 @@ const LoginComponent = () => {
             <div className="button-container">
                 <button onClick={handleSignIn}>Sign In</button>
                 <button onClick={handleSignUp}><Link to="/signup">Sign Up</Link></button>
-                <button onClick={startWithoutSignIn}>Start with out Sign In</button>
+                <button onClick={startWithoutSignIn}><Link to="/stream page">Start with out Sign In</Link></button>
             </div>
         </div>
     );

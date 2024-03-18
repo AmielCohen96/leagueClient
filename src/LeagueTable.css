@@ -1,0 +1,66 @@
+/*!* LeagueTable.css *!*/
+
+/*.league-table-container {*/
+/*    position: absolute;*/
+/*    left: 20px; !* Adjust the distance from the left edge *!*/
+/*    top: 50%; !* Position the table vertically in the middle *!*/
+/*    transform: translateY(-50%); !* Center the table vertically *!*/
+/*    max-width: 800px; !* Adjust the maximum width as needed *!*/
+/*}*/
+
+/*.league-table {*/
+/*    width: 100%;*/
+/*    border-collapse: collapse;*/
+/*    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); !* Add a box shadow for depth *!*/
+/*}*/
+
+/*.league-table th,*/
+/*.league-table td {*/
+/*    padding: 12px; !* Increase padding *!*/
+/*    font-size: 16px; !* Increase font size *!*/
+/*    text-align: left;*/
+/*    border-bottom: 1px solid #ddd;*/
+/*    background-color: #f2f2f2;*/
+/*}*/
+
+/*.league-table th {*/
+/*    background-color: #f2f2f2;*/
+/*    font-weight: bold;*/
+/*}*/
+
+
+/* LeagueTable.css */
+
+/* LeagueTable.css */
+
+.league-table-container {
+    position: absolute;
+    left: 20px; /* Adjust the distance from the left edge */
+    top: 50%; /* Position the table vertically in the middle */
+    transform: translateY(-50%); /* Center the table vertically */
+    max-width: 800px; /* Adjust the maximum width as needed */
+}
+
+.league-table {
+    width: 100%;
+    border: 2px solid #ddd; /* Add border to the table */
+    border-collapse: collapse;
+}
+
+.league-table th,
+.league-table td {
+    padding: 12px; /* Increase padding */
+    font-size: 16px; /* Increase font size */
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    background-color: #f5f5f5;
+}
+
+.league-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+
+}
+
+
+
