@@ -15,17 +15,20 @@ const StreamPage = ({ username }) => {
                 console.error('Error fetching teams:', error);
             }
         };
-
         fetchTeams();
     }, []);
 
 
     return (
         <div className="welcome-container">
-            <h2>Hello {username}</h2>
+            <div className="navigation-bar">
+                <h2>Hello {username}</h2>
+            </div>
             <div className="tables-container">
                 <div className="left-table">
-                    <h3>League table</h3>
+                    <div className="title-background">
+                        <h3>League table</h3>
+                    </div>
                     <table>
                         <thead>
                         <tr>
@@ -46,9 +49,14 @@ const StreamPage = ({ username }) => {
                         ))}
                         </tbody>
                     </table>
+                    <div className="button-container">
+                        <button>Click To Gamble</button>
+                    </div>
                 </div>
                 <div className="right-table">
-                    <h3>Score Table</h3>
+                    <div className="title-background">
+                        <h3>Score Table</h3>
+                    </div>
                     <table>
                         <thead>
                         <tr>
