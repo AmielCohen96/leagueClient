@@ -1,15 +1,23 @@
-import React, { useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import './StreamPage.css';
+import axios from "axios";
 
 const StreamPage = ({ username }) => {
 
-    useEffect(() => {
-        // This function will run when the component is mounted (rendered for the first time)
-        console.log("Component mounted");
+    const [teams, setTeams] = useState([]);
 
-        // You can perform any actions here
-        // For example, fetching data, initializing state, etc.
-    }, []); // Empty dependency array means this effect will only run once, when the component mounts
+    useEffect(() => {
+        const fetchTeams = async () => {
+            try {
+                const response = await axios.get('http://localhost:9124/generateTeams');
+                setTeams(response.data);
+            } catch (error) {
+                console.error('Error fetching teams:', error);
+            }
+        };
+
+        fetchTeams();
+    }, []);
 
 
     return (
@@ -17,21 +25,23 @@ const StreamPage = ({ username }) => {
             <h2>Hello {username}</h2>
             <div className="tables-container">
                 <div className="left-table">
-                    <h3>Live Matches</h3>
+                    <h3>League table</h3>
                     <table>
                         <thead>
                         <tr>
-                            <th>Goals Home Team</th>
-                            <th>Goals Away Team</th>
-                            <th>Teams</th>
+                            <th>Name</th>
+                            <th>Goals For</th>
+                            <th>Goals Against</th>
+                            <th>Points</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {[...Array(6)].map((_, index) => (
+                        {teams.map((team, index) => (
                             <tr key={index}>
-                                <td>Data</td>
-                                <td>Data</td>
-                                <td>Data</td>
+                                <td>{team.name}</td>
+                                <td>{team.goalsFor}</td>
+                                <td>{team.goalsAgainst}</td>
+                                <td>{team.points}</td>
                             </tr>
                         ))}
                         </tbody>

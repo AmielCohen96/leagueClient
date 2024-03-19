@@ -1,10 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LoginComponent from './components/LoginComponent';
 import SignupComponent from './components/SignupComponent';
 import './App.css'; // Import your CSS file
 import backgroundImg from './images/football.jpeg';
-import LeagueTable from "./LeagueTable";
 import StreamPage from "./components/StreamPage";
 
 const App = () => {
@@ -16,8 +15,6 @@ const App = () => {
         width: '100vw', // Ensure full width of the screen
         height: '100vh', // Ensure full height of the screen
     };
-
-
 
     return (
         <div className="App" style={appStyle}>
