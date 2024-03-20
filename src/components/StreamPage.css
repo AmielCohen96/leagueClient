@@ -31,8 +31,9 @@ table {
     border-collapse: collapse;
     background-color: #f0f0f0;
     border-radius: 15px;
-    tr:nth-child(even) {background-color: #E2F4C5;}
 }
+tr:nth-child(even) {background-color: #E2F4C5;}
+
 
 th,
 td {

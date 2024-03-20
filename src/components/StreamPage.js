@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import './StreamPage.css';
 import axios from "axios";
 
@@ -7,19 +7,14 @@ const StreamPage = ({ username }) => {
     const [roundResults, setRoundResults] = useState([]);
     const [currentRound, setCurrentRound] = useState(1);
     const [totalRounds, setTotalRounds] = useState(0);
-
+    const [matches, setMatches] = useState([]);
+    const [seasonEnded, setSeasonEnded] = useState(false);
 
     useEffect(() => {
         const fetchTeams = async () => {
             try {
                 const response = await axios.get('http://localhost:9124/generateTeams');
                 setTeams(response.data);
-                const totalTeams = response.data.length;
-                const rounds = totalTeams - 1;
-                setTotalRounds(rounds);
-                console.log("Teams fetched:", response.data);
-                generateMatches(response.data); // Make sure this line is executed
-                console.log("Matches generated");
             } catch (error) {
                 console.error('Error fetching teams:', error);
             }
@@ -28,19 +23,60 @@ const StreamPage = ({ username }) => {
         fetchTeams();
     }, []);
 
-
     useEffect(() => {
         if (teams.length > 1) {
-            playRound();
+            const totalTeams = teams.length;
+            const rounds = totalTeams - 1;
+            setTotalRounds(rounds);
+            const matches = generateMatches(teams);
+            setMatches(matches);
         }
-    }, [currentRound]); // Watch for changes in currentRound
+    }, [teams]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (currentRound < totalRounds) {
+                setCurrentRound(prevRound => prevRound + 1);
+                playRound(matches[currentRound]); // Play the next round
+            } else {
+                clearInterval(interval);
+                setSeasonEnded(true);
+            }
+        }, 3000); // Change the interval to a slower pace
+        return () => clearInterval(interval);
+    }, [currentRound, totalRounds, matches]);
+
+    useEffect(() => {
+        if (roundResults.length > 0) {
+            updateLeagueTable();
+        }
+    }, [roundResults]);
+
 
     const simulateMatch = (team1, team2) => {
-        // Simulate match result (random goals)
-        const goalsTeam1 = Math.floor(Math.random() * 5); // Random goals for team 1 (0-4)
-        const goalsTeam2 = Math.floor(Math.random() * 5); // Random goals for team 2 (0-4)
-        console.log(`Match: ${team1.name} vs ${team2.name} - Result: ${goalsTeam1} - ${goalsTeam2}`);
-        // Store match result
+        const goalsTeam1 = Math.floor(Math.random() * 5);
+        const goalsTeam2 = Math.floor(Math.random() * 5);
+
+        // Update team1's balance sheet
+        if (goalsTeam1 > goalsTeam2) {
+            team1.points += 3;
+        } else if (goalsTeam1 === goalsTeam2) {
+            team1.points += 1;
+        }
+        team1.goalsFor += goalsTeam1;
+        team1.goalsAgainst += goalsTeam2;
+
+        // Update team2's balance sheet
+        if (goalsTeam2 > goalsTeam1) {
+            team2.points += 3;
+        } else if (goalsTeam2 === goalsTeam1) {
+            team2.points += 1;
+        }
+        team2.goalsFor += goalsTeam2;
+        team2.goalsAgainst += goalsTeam1;
+
+        console.log(team1.name, ": ", team1.points);
+        console.log(team2.name, ": ", team2.points);
         const matchResult = {
             team1: team1.name,
             team2: team2.name,
@@ -50,52 +86,50 @@ const StreamPage = ({ username }) => {
         setRoundResults(prevResults => [...prevResults, matchResult]);
     };
 
-    const playRound = () => {
-        const matches = generateMatches();
-        console.log("Matches for this round:", matches);
 
-        matches.forEach(match => {
+    const playRound = (roundMatches) => {
+        setRoundResults([]); // Clear previous round results
+        roundMatches.forEach(match => {
             const { team1, team2 } = match;
-            console.log("Current match:", team1.name, "vs", team2.name);
             simulateMatch(team1, team2);
         });
-
-        setCurrentRound(prevRound => prevRound + 1);
     };
 
-
-    const generateMatches = () => {
+    const generateMatches = (teams) => {
         const matches = [];
         const n = teams.length;
-
-        // Initialize an array to hold the indices of teams
         const teamIndices = Array.from({ length: n }, (_, index) => index);
 
-        // For each round, generate matches
         for (let round = 0; round < n - 1; round++) {
             const roundMatches = [];
-
-            // Pair teams against each other
             for (let i = 0; i < n / 2; i++) {
                 const team1Index = teamIndices[i];
                 const team2Index = teamIndices[n - 1 - i];
-
-                // Push the matched teams into the roundMatches array
                 roundMatches.push({ team1: teams[team1Index], team2: teams[team2Index] });
             }
-
-            // Rotate team indices for the next round
             teamIndices.splice(1, 0, teamIndices.pop());
-
-            // Push the generated matches for this round into the matches array
             matches.push(roundMatches);
         }
-
-        console.log("Generated Matches:", matches); // Log the generated matches
         return matches;
     };
 
-
+    const updateLeagueTable = () => {
+        const sortedTeams = [...teams].sort((a, b) => {
+            // Sort teams based on points
+            if (a.points !== b.points) {
+                return b.points - a.points;
+            }
+            // If points are equal, sort based on goal difference
+            const goalDifferenceA = a.goalsFor - a.goalsAgainst;
+            const goalDifferenceB = b.goalsFor - b.goalsAgainst;
+            if (goalDifferenceA !== goalDifferenceB) {
+                return goalDifferenceB - goalDifferenceA;
+            }
+            // If goal difference is equal, sort alphabetically by team name
+            return a.name.localeCompare(b.name);
+        });
+        setTeams(sortedTeams);
+    };
 
     return (
         <div className="welcome-container">
@@ -134,15 +168,36 @@ const StreamPage = ({ username }) => {
                     </div>
                 </div>
                 <div className="matches-container">
-                    <h3>Round {currentRound} Matches</h3>
-                    <ul>
+                    <div className="title-background">
+                        <h3>Round {currentRound}</h3>
+                    </div>
+                    {/*<ul>*/}
+                    {/*    {roundResults.map((matchResult, index) => (*/}
+                    {/*        <li key={index}>*/}
+                    {/*            {matchResult.team1} {matchResult.goalsTeam1} -  {matchResult.goalsTeam2}  {matchResult.team2}*/}
+                    {/*        </li>*/}
+                    {/*    ))}*/}
+                    {/*</ul>*/}
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Home team</th>
+                            <th>Score</th>
+                            <th>Away team</th>
+                        </tr>
+                        </thead>
+                        <tbody>
                         {roundResults.map((matchResult, index) => (
-                            <li key={index}>
-                                {matchResult.team1} vs {matchResult.team2} - Result: {matchResult.goalsTeam1} - {matchResult.goalsTeam2}
-                            </li>
+                            <tr key={index}>
+                                <td>{matchResult.team1}</td>
+                                <td>{matchResult.goalsTeam1} -  {matchResult.goalsTeam2}</td>
+                                <td>{matchResult.team2}</td>
+                            </tr>
                         ))}
-                    </ul>
+                        </tbody>
+                    </table>
                 </div>
+                {seasonEnded && <p>The season has ended!</p>}
             </div>
         </div>
     );
