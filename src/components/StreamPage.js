@@ -2,24 +2,31 @@ import React, { useEffect, useState } from 'react';
 import './StreamPage.css';
 import axios from "axios";
 
-const StreamPage = ({ username }) => {
+const StreamPage = () => {
     const [teams, setTeams] = useState([]);
     const [roundResults, setRoundResults] = useState([]);
     const [currentRound, setCurrentRound] = useState(1);
     const [totalRounds, setTotalRounds] = useState(0);
     const [matches, setMatches] = useState([]);
     const [seasonEnded, setSeasonEnded] = useState(false);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
 
     useEffect(() => {
         const fetchTeams = async () => {
             try {
                 const response = await axios.get('http://localhost:9124/generateTeams');
                 setTeams(response.data);
+                const params = new URLSearchParams(window.location.search);
+                const username = params.get('username');
+                const password = params.get('password');
+                setUsername(username);
+                setPassword(password);
             } catch (error) {
                 console.error('Error fetching teams:', error);
             }
         };
-
         fetchTeams();
     }, []);
 
@@ -131,10 +138,17 @@ const StreamPage = ({ username }) => {
         setTeams(sortedTeams);
     };
 
+    const handleProfile = () => {
+        console.log('Redirecting to profile page...');
+        window.location.href = '/profile-page';
+    };
+
+
     return (
         <div className="welcome-container">
             <div className="navigation-bar">
                 <h2>Hello {username}</h2>
+                <button onClick={handleProfile} className={"circular-button"}>P</button>
             </div>
             <div className="tables-container">
                 <div className="left-table">

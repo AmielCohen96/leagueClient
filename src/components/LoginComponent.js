@@ -25,13 +25,14 @@ const LoginComponent = () => {
         event.preventDefault();
         try {
             const response = await axios.post('http://localhost:9124/login', null,{params: {
-                username,
-                password
-            }});
+                    username,
+                    password
+                }});
             console.log('Login response:', response.data);
             if (response.data.success) {
                 console.log("good")
-                window.location.href = '/stream-page';
+                // window.location.href = '/stream-page';
+                window.location.href = `/stream-page?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
                 // Redirect to dashboard
             } else {
                 console.log("bad")
@@ -46,10 +47,12 @@ const LoginComponent = () => {
 
     const startWithoutSignIn = () => {
         console.log('without')
+        window.location.href = '/stream-page';
     }
 
     const handleSignUp = () => {
         console.log('Redirecting to sign up page...');
+        window.location.href = '/signup';
     };
 
     return (
@@ -75,8 +78,8 @@ const LoginComponent = () => {
             </div>
             <div className="button-container">
                 <button onClick={handleSubmit}>Sign In</button>
-                <button onClick={handleSignUp}><Link to="/signup">Sign Up</Link></button>
-                <button><Link to="/stream-page">Start without Sign In</Link></button>
+                <button onClick={handleSignUp}>Sign Up</button>
+                <button onClick={startWithoutSignIn}>Start without Sign In</button>
             </div>
         </div>
     );

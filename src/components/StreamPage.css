@@ -1,6 +1,6 @@
-h2 {
-    margin-top: 0;
-}
+/*h2 {*/
+/*    margin-top: 0;*/
+/*}*/
 
 h3 {
     text-align: center;
@@ -51,14 +51,6 @@ td {
     border: 1px solid black;
 }
 
-.navigation-bar {
-    background-color: #f0f0f0;
-    height: 50px;
-    width: 100%;
-    border-bottom: 1px solid black;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
 .button-container {
     text-align: center;
     margin-top: 10px;
@@ -70,4 +62,41 @@ td {
     padding: 8px 16px;
     font-size: 18px;
     width: 200px;
+}
+
+.navigation-bar {
+    background-color: #f0f0f0;
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid black;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.navigation-bar h2 {
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    line-height: 50px; /* Vertically center the text */
+    margin-right: 60px; /* Space for the button */
+}
+
+.circular-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #7ecc7e; /* Example button color */
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    margin-top: 0;
+}
+
+.circular-button::after {
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Ensure the pseudo-element takes up the full height */
 }
