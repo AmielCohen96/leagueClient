@@ -62,3 +62,24 @@
     transform: rotate(360deg);
   }
 }
+.profile-update-link {
+  display: block;
+  width: fit-content;
+  margin: 10px auto;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: black;
+  color: black;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.profile-update-link:hover {
+  background-color:black; /* Change background color on hover */
+}
+
