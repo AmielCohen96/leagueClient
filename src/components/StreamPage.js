@@ -11,11 +11,13 @@ const StreamPage = () => {
     const [totalRounds, setTotalRounds] = useState(0);
     const [matches, setMatches] = useState([]);
     const [seasonEnded, setSeasonEnded] = useState(false);
-    const [mode, setMode] = useState(true);
+    const [mode, setMode] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [balance, setBalance] = useState(0); // State to store user balance
     const [newBalance, setNewBalance] = useState(0);
+    const [newUsername, setNewUsername] = useState('');
+    const [message, setMessage] = useState('');
 
 
     useEffect(() => {
@@ -27,6 +29,7 @@ const StreamPage = () => {
                         password
                     }
                 });
+                console.log(response.data);
                 setBalance(response.data);
             } catch (error) {
                 console.error('Error fetching balance:', error);
@@ -40,7 +43,7 @@ const StreamPage = () => {
         const interval = setInterval(() => {
             if (currentRound < totalRounds) {
                 setCurrentRound(prevRound => prevRound + 1);
-                playRound(matches[currentRound]); // Play the next round
+                playRound(matches[currentRound - 1]); // Play the next round
             } else {
                 clearInterval(interval);
                 setSeasonEnded(true);
@@ -51,13 +54,16 @@ const StreamPage = () => {
 
 
 
-    const playRound = (roundMatches) => {
+    const playRound = async (roundMatches) => {
         setRoundResults([]); // Clear previous round results
-        roundMatches.forEach(match => {
+
+        // Simulate matches asynchronously
+        for (const match of roundMatches) {
             const { team1, team2 } = match;
-            simulateMatch(team1, team2);
-        });
+            await simulateMatch(team1, team2);
+        }
     };
+
 
     const handleBalanceChange = (event) => {
         setNewBalance(event.target.value);
@@ -108,88 +114,75 @@ const StreamPage = () => {
 
 
 
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         if (currentRound < totalRounds) {
-    //             setCurrentRound(prevRound => prevRound + 1);
-    //             playRound(matches[currentRound]); // Play the next round
-    //             // console.log("matches: ", matches);
-    //             console.log("round results stream: ", roundResults);
-    //         } else {
-    //             clearInterval(interval);
-    //             setSeasonEnded(true);
-    //         }
-    //     }, 10000); // Change the interval to a slower pace
-    //     setMode(!mode);
-    //     return () => clearInterval(interval);
-    // }, [currentRound, totalRounds, matches]);
-
     useEffect(() => {
         if (roundResults.length > 0) {
             updateLeagueTable();
         }
-        console.log(roundResults);
-        console.log(matches);
-        console.log(currentRound);
+        // console.log(roundResults);
+        // console.log(matches);
+        // console.log(currentRound);
     }, [roundResults]);
 
 
     const simulateMatch = (team1, team2) => {
-        const goalsTeam1 = Math.floor(Math.random() * 5);
-        const goalsTeam2 = Math.floor(Math.random() * 5);
-        // Update team1's balance sheet
-        if (goalsTeam1 > goalsTeam2) {
-            team1.points += 3;
-        } else if (goalsTeam1 === goalsTeam2) {
-            team1.points += 1;
-        }
-        team1.goalsFor += goalsTeam1;
-        team1.goalsAgainst += goalsTeam2;
-
-        // Update team2's balance sheet
-        if (goalsTeam2 > goalsTeam1) {
-            team2.points += 3;
-        } else if (goalsTeam2 === goalsTeam1) {
-            team2.points += 1;
-        }
-        team2.goalsFor += goalsTeam2;
-        team2.goalsAgainst += goalsTeam1;
-        // Calculate the skill difference
-        const skillDifference = Math.abs(team1.skills - team2.skills);
-
-        // Normalize the skill difference to a range between 0 and 1
-        const normalizedDifference = skillDifference / 40; // Assuming the maximum skill difference is 40
-
-        // Assign probabilities based on the normalized skill difference
-        const team1Probability = 0.2 + (1 - normalizedDifference) * 0.35; // Maximum win probability is 0.5
-        const team2Probability = 0.8 - (1 - normalizedDifference) * 0.35; // Maximum lose probability is 0.5
-        const drawProbability = 0.5 - Math.abs(0.5 - normalizedDifference) * 0.2; // Draw probability adjusted
-
-        // Convert probabilities to odds
-        const oneOdds = 1 / team1Probability;
-        const drawOdds = 1 / drawProbability;
-        const twoOdds = 1 / team2Probability;
-        // Construct the match result object
-        const matchResult = {
-            team1: {
-                name: team1.name,
-                goals: goalsTeam1,
-                odd: oneOdds.toFixed(2),
-                skills: team1.skills
-            },
-            team2: {
-                name: team2.name,
-                goals: goalsTeam2,
-                odd: twoOdds.toFixed(2),
-                skills: team2.skills
-            },
-            draw: {
-              odd: drawOdds.toFixed(2)
+        return new Promise(resolve => {
+            const goalsTeam1 = Math.floor(Math.random() * 5);
+            const goalsTeam2 = Math.floor(Math.random() * 5);
+            // Update team1's balance sheet
+            if (goalsTeam1 > goalsTeam2) {
+                team1.points += 3;
+            } else if (goalsTeam1 === goalsTeam2) {
+                team1.points += 1;
             }
-        };
+            team1.goalsFor += goalsTeam1;
+            team1.goalsAgainst += goalsTeam2;
 
-        // Update round results state
-        setRoundResults(prevResults => [...prevResults, matchResult]);
+            // Update team2's balance sheet
+            if (goalsTeam2 > goalsTeam1) {
+                team2.points += 3;
+            } else if (goalsTeam2 === goalsTeam1) {
+                team2.points += 1;
+            }
+            team2.goalsFor += goalsTeam2;
+            team2.goalsAgainst += goalsTeam1;
+            // Calculate the skill difference
+            const skillDifference = Math.abs(team1.skills - team2.skills);
+
+            // Normalize the skill difference to a range between 0 and 1
+            const normalizedDifference = skillDifference / 40; // Assuming the maximum skill difference is 40
+
+            // Assign probabilities based on the normalized skill difference
+            const team1Probability = 0.2 + (1 - normalizedDifference) * 0.35; // Maximum win probability is 0.5
+            const team2Probability = 0.8 - (1 - normalizedDifference) * 0.35; // Maximum lose probability is 0.5
+            const drawProbability = 0.5 - Math.abs(0.5 - normalizedDifference) * 0.2; // Draw probability adjusted
+
+            // Convert probabilities to odds
+            const oneOdds = 1 / team1Probability;
+            const drawOdds = 1 / drawProbability;
+            const twoOdds = 1 / team2Probability;
+            // Construct the match result object
+            const matchResult = {
+                team1: {
+                    name: team1.name,
+                    goals: goalsTeam1,
+                    odd: oneOdds.toFixed(2),
+                    skills: team1.skills
+                },
+                team2: {
+                    name: team2.name,
+                    goals: goalsTeam2,
+                    odd: twoOdds.toFixed(2),
+                    skills: team2.skills
+                },
+                draw: {
+                    odd: drawOdds.toFixed(2)
+                }
+            };
+
+            // Update round results state
+            setRoundResults(prevResults => [...prevResults, matchResult]);
+            resolve();
+        });
     };
 
 
@@ -243,12 +236,41 @@ const StreamPage = () => {
         window.location.href = '/profile-page';
     };
 
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        try {
+            const response = await axios.post('http://localhost:9124/update-username', null,{
+                username: username,
+                password: password,
+                newUsername: newUsername
+            });
+            if (response.data.success) {
+                setMessage('Username updated successfully');
+            } else {
+                setMessage('Error updating username: ' + response.data.errorCode);
+            }
+        } catch (error) {
+            setMessage('Error updating username');
+            console.error('Error updating username:', error);
+        }
+    };
+
 
     return (
         <div className="welcome-container">
             <div className="navigation-bar">
                 <h2>Hello {username} - Balance: {balance}</h2>
                 <button onClick={handleProfile} className={"circular-button"}>P</button>
+            </div>
+            <div>
+                <form onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="newUsername">New Username:</label>
+                        <input type="text" id="newUsername" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
+                    </div>
+                    <button type="submit">Update Username</button>
+                </form>
+                {message && <p>{message}</p>}
             </div>
             <div className="tables-container">
                 <div className="left-table">
@@ -288,7 +310,7 @@ const StreamPage = () => {
                         </div>
                             :
                             <div>
-                                <Bets username={username} roundResults={roundResults} />
+                                <Bets username={username} games={matches} />
                             </div>
                         }
                     </div>

@@ -16,6 +16,11 @@ const Bets = (props) => {
     const [newBalance, setNewBalance] = useState(0);
 
 
+    useEffect(() => {
+        setCurrentRound(10);
+        console.log(props.games);
+    },[currentRound]);
+
 
     return (
         <div>
@@ -28,16 +33,25 @@ const Bets = (props) => {
                 </tr>
                 </thead>
                 <tbody>
-                {props.roundResults.map((match, index) => (
-                    <tr key={index}>
-                        <td><button>{match.team1.name} {match.team1.odd}</button></td>
-                        <td><button>{match.draw.odd}</button></td>
-                        <td><button>{match.team2.odd} {match.team2.name}</button></td>
-                    </tr>
+                {props.games.map((game, gameIndex) => (
+                    game.map((match, matchIndex) => (
+                        <tr key={gameIndex + '-' + matchIndex}>
+                            <td>
+                                <button>{match.team1.name}</button>
+                            </td>
+                            <td>
+                                <button>{/* Add content for draw */}</button>
+                            </td>
+                            <td>
+                                <button>{match.team2.name}</button>
+                            </td>
+                        </tr>
+                    ))
                 ))}
                 </tbody>
             </table>
         </div>
+
     );
 };
 
