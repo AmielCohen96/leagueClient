@@ -100,3 +100,19 @@ td {
     align-items: center;
     height: 100%; /* Ensure the pseudo-element takes up the full height */
 }
+
+.selected-button {
+    background-color: gray; /* Change to light blue when selected */
+    color: white; /* Change text color to white */
+}
+
+.bet-button.selected-button:hover {
+    background-color: darkgrey; /* Maintain light blue background on hover */
+    color: white; /* Maintain white text color on hover */
+}
+
+.betting-form {
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+}

@@ -11,6 +11,13 @@ const StreamPage = () => {
     const [seasonEnded, setSeasonEnded] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [bettingEnabled, setBettingEnabled] = useState(false); // Control betting phase
+    const [currentBets, setCurrentBets] = useState({}); // Store current bets
+    const [selectedBets, setSelectedBets] = useState({});
+    const [betAmount, setBetAmount] = useState(0);
+    const [bettingForm, setBettingForm] = useState([]);
+    const [allRoundResults, setAllRoundResults] = useState([]);
+
 
 
     useEffect(() => {
@@ -41,17 +48,32 @@ const StreamPage = () => {
     }, [teams]);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            if (currentRound < totalRounds) {
-                setCurrentRound(prevRound => prevRound + 1);
-                playRound(matches[currentRound]); // Play the next round
-            } else {
-                clearInterval(interval);
-                setSeasonEnded(true);
-            }
-        }, 3000); // Change the interval to a slower pace
-        return () => clearInterval(interval);
+        if (matches.length > 0) { // Check if matches are available
+            const roundDuration = 5000; // Total round duration (30 seconds)
+            const bettingPhaseDuration = 2500; // Betting phase duration (15 seconds)
+            const interval = setInterval(() => {
+                if (currentRound < totalRounds) {
+                    console.log("Current Round:", currentRound);
+                    setCurrentRound(prevRound => prevRound + 1);
+                    setBettingEnabled(true); // Enable betting phase
+                    playRound(matches[currentRound - 1]); // Play the next round
+                    setTimeout(() => {
+                        setBettingEnabled(false); // Disable betting after 15 seconds
+                        console.log("Matches:", matches); // Log matches before playing round
+                    }, bettingPhaseDuration); // Wait for 15 seconds (betting phase)
+                } else {
+                    clearInterval(interval);
+                    setSeasonEnded(true);
+                }
+            }, roundDuration); // Change round every 30 seconds
+
+            return () => clearInterval(interval);
+        }
     }, [currentRound, totalRounds, matches]);
+
+
+
+
 
     useEffect(() => {
         if (roundResults.length > 0) {
@@ -59,8 +81,7 @@ const StreamPage = () => {
         }
     }, [roundResults]);
 
-
-    const simulateMatch = (team1, team2) => {
+    const simulateMatch = (team1, team2, matchId, round) => {
         const goalsTeam1 = Math.floor(Math.random() * 5);
         const goalsTeam2 = Math.floor(Math.random() * 5);
 
@@ -82,23 +103,25 @@ const StreamPage = () => {
         team2.goalsFor += goalsTeam2;
         team2.goalsAgainst += goalsTeam1;
 
-        console.log(team1.name, ": ", team1.points);
-        console.log(team2.name, ": ", team2.points);
         const matchResult = {
+            roundNumber: round,
+            matchNumber: matchId,
             team1: team1.name,
             team2: team2.name,
             goalsTeam1,
-            goalsTeam2
+            goalsTeam2,
+            score: goalsTeam1 > goalsTeam2 ? 1 : goalsTeam1 < goalsTeam2 ? 2 : 0, // Set score based on goals
         };
+        allRoundResults.push(matchResult);
+        console.log(allRoundResults)
         setRoundResults(prevResults => [...prevResults, matchResult]);
     };
-
 
     const playRound = (roundMatches) => {
         setRoundResults([]); // Clear previous round results
         roundMatches.forEach(match => {
             const { team1, team2 } = match;
-            simulateMatch(team1, team2);
+            simulateMatch(team1, team2, match.matchNumber, match.roundNumber);
         });
     };
 
@@ -112,7 +135,18 @@ const StreamPage = () => {
             for (let i = 0; i < n / 2; i++) {
                 const team1Index = teamIndices[i];
                 const team2Index = teamIndices[n - 1 - i];
-                roundMatches.push({ team1: teams[team1Index], team2: teams[team2Index] });
+                const team1 = teams[team1Index];
+                const team2 = teams[team2Index];
+                const odds = calculateBettingOdds(team1.skills, team2.skills); // Calculate odds
+                roundMatches.push({
+                    roundNumber: round + 1,
+                    matchNumber: i + 1,
+                    team1,
+                    team2,
+                    team1Odd: odds.team1Win, // Add odds to match
+                    drawOdd: odds.draw,
+                    team2Odd: odds.team2Win
+                });
             }
             teamIndices.splice(1, 0, teamIndices.pop());
             matches.push(roundMatches);
@@ -142,6 +176,121 @@ const StreamPage = () => {
         console.log('Redirecting to profile page...');
         window.location.href = '/profile-page';
     };
+
+    const calculateBettingOdds = (team1Skill, team2Skill) => {
+        // Step 1: Calculate the skill difference
+        const skillDifference = Math.abs(team1Skill - team2Skill);
+
+        // Step 2: Determine the base odds based on skill difference
+        let baseOddTeam1Win = 100 / (team1Skill + 1);
+        let baseOddTeam2Win = 100 / (team2Skill + 1);
+        let baseOddDraw = 100 / (skillDifference + 1);
+
+        // Step 3: Adjust the odds for each outcome
+        let oddTeam1Win = baseOddTeam1Win * (1 + skillDifference * 0.05);
+        let oddTeam2Win = baseOddTeam2Win * (1 + skillDifference * 0.05);
+        let oddDraw = (oddTeam1Win + oddTeam2Win) / 2;
+
+        // Step 4: Round the odds to two decimal places and round up to multiples of 5
+        oddTeam1Win = Math.ceil(oddTeam1Win * 20) / 20;
+        oddTeam2Win = Math.ceil(oddTeam2Win * 20) / 20;
+        oddDraw = Math.ceil(oddDraw * 20) / 20;
+
+        // Step 5: Ensure that all three odds are unique
+        if (oddTeam1Win === oddTeam2Win || oddTeam1Win === oddDraw) {
+            // Adjust one of the odds slightly to ensure uniqueness
+            oddTeam1Win += 0.01;
+        }
+        if ( oddTeam2Win === oddDraw){
+            oddDraw += 0.01;
+        }
+
+        return {
+            team1Win: oddTeam1Win,
+            draw: oddDraw,
+            team2Win: oddTeam2Win
+        };
+    };
+
+    // Function to handle changes in the amount input field
+    const handleAmountChange = (event) => {
+        setBetAmount(event.target.value);
+    };
+
+    const handleBet = (matchId, odds, result) => {
+        setSelectedBets(prevBets => {
+            const updatedBets = { ...prevBets };
+            if (updatedBets[matchId] === result) {
+                delete updatedBets[matchId];
+            } else {
+                updatedBets[matchId] = result;
+            }
+            return updatedBets;
+        });
+
+        // Find the index of the match with the given matchId
+        const matchIndex = matches[currentRound - 1].findIndex(match => match.matchNumber === matchId);
+
+        setBettingForm(prevForm => [
+            ...prevForm,
+            {
+                roundNumber: currentRound,
+                matchNumber: matchId,
+                bet: result,
+                odd: odds
+            }
+        ]);
+
+        // Update the state of the selected button based on the match index
+        setBettingForm(prevForm => [
+            ...prevForm,
+            {
+                roundNumber: currentRound,
+                matchNumber: matchId,
+                bet: result,
+                odd: odds
+            }
+        ]);
+    };
+
+
+
+
+    const submitBets = () => {
+        if (bettingForm.length === 0) {
+            alert('Please place your bets before submitting.');
+            return;
+        }
+
+        let allBetsCorrect = true;
+
+        bettingForm.forEach(bet => {
+            console.log(bet);
+            let betCorrect = true;
+            allRoundResults.forEach(matchResult => {
+                if(matchResult.roundNumber === bet.roundNumber && matchResult.matchNumber === bet.matchNumber && matchResult.score !== bet.bet)
+                    {
+
+                        betCorrect = false;
+                        return;
+                    }
+            });
+            if (!betCorrect) {
+                allBetsCorrect = false;
+                return;
+            }
+        });
+
+        if (allBetsCorrect) {
+            alert('Congratulations! You won.');
+        } else {
+            alert('Sorry, you did not win this time.');
+        }
+
+        setBettingForm([]);
+        setBetAmount(0);
+    };
+
 
 
     return (
@@ -177,38 +326,80 @@ const StreamPage = () => {
                         ))}
                         </tbody>
                     </table>
-                    <div className="button-container">
-                        <button>Click To Gamble</button>
-                    </div>
                 </div>
                 <div className="matches-container">
                     <div className="title-background">
                         <h3>Round {currentRound}</h3>
                     </div>
-                    {/*<ul>*/}
-                    {/*    {roundResults.map((matchResult, index) => (*/}
-                    {/*        <li key={index}>*/}
-                    {/*            {matchResult.team1} {matchResult.goalsTeam1} -  {matchResult.goalsTeam2}  {matchResult.team2}*/}
-                    {/*        </li>*/}
-                    {/*    ))}*/}
-                    {/*</ul>*/}
                     <table>
                         <thead>
                         <tr>
                             <th>Home team</th>
-                            <th>Score</th>
+                            {bettingEnabled ? (
+                                <>
+                                    <th>1</th>
+                                    <th>X</th>
+                                    <th>2</th>
+                                </>
+                            ) : (
+                                <>
+                                    <th>Score</th>
+                                </>
+                            )}
                             <th>Away team</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {roundResults.map((matchResult, index) => (
+                        {matches[currentRound - 1] && matches[currentRound - 1].map((match, index) => (
                             <tr key={index}>
-                                <td>{matchResult.team1}</td>
-                                <td>{matchResult.goalsTeam1} -  {matchResult.goalsTeam2}</td>
-                                <td>{matchResult.team2}</td>
+                                <td>{match.team1.name}</td>
+                                {bettingEnabled ? (
+                                    <>
+                                        <td>
+                                            <button
+                                                className={`bet-button ${selectedBets[match.matchNumber] === 1 ? 'selected-button' : ''}`}
+                                                onClick={() => handleBet(match.matchNumber, match.team1Odd, 1)}
+                                            >
+                                                {match.team1Odd}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button
+                                                className={`bet-button ${selectedBets[match.matchNumber] === 0 ? 'selected-button' : ''}`}
+                                                onClick={() => handleBet(match.matchNumber, match.drawOdd, 0)}
+                                            >
+                                                {match.drawOdd}
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <button
+                                                className={`bet-button ${selectedBets[match.matchNumber] === 2 ? 'selected-button' : ''}`}
+                                                onClick={() => handleBet(match.matchNumber, match.team2Odd, 2)}
+                                            >
+                                                {match.team2Odd}
+                                            </button>
+                                        </td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td>{roundResults[index]?.goalsTeam1} -  {roundResults[index]?.goalsTeam2}</td>
+                                    </>
+                                )}
+                                <td>{match.team2.name}</td>
                             </tr>
                         ))}
                         </tbody>
+                        {bettingEnabled && matches.length > 0 && (
+                            <div className="betting-form">
+                                <input
+                                    type="number"
+                                    value={betAmount}
+                                    onChange={handleAmountChange}
+                                    placeholder="Enter bet amount"
+                                />
+                                <button onClick={submitBets}>Submit</button>
+                            </div>
+                        )}
                     </table>
                 </div>
                 {seasonEnded && <p>The season has ended!</p>}
