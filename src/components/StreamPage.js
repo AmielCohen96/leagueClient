@@ -21,29 +21,43 @@ const StreamPage = () => {
 
 
     useEffect(() => {
-        const fetchTeams = async () => {
+        const fetchTeamsAndMatches = async () => {
             try {
                 const response = await axios.get('http://localhost:9124/generateTeams');
-                setTeams(response.data);
+                const fetchedTeams = response.data;
+                setTeams(fetchedTeams);
+
+                // Generate matches based on fetched teams
+                const matches = generateMatches(fetchedTeams);
+                setMatches(matches);
+
+                // Extract username and password from URL params
                 const params = new URLSearchParams(window.location.search);
                 const username = params.get('username');
                 const password = params.get('password');
                 setUsername(username);
                 setPassword(password);
+
+                // Start the first round immediately after fetching teams and matches
+                playRound(matches[currentRound - 1]);
+                setBettingEnabled(true);
+                setTimeout(() => {
+                    setBettingEnabled(false);
+                }, 2500); // 5 seconds for betting phase
             } catch (error) {
                 console.error('Error fetching teams:', error);
             }
         };
-        fetchTeams();
+
+        fetchTeamsAndMatches();
     }, []);
+
 
     useEffect(() => {
         if (teams.length > 1) {
             const totalTeams = teams.length;
             const rounds = totalTeams - 1;
             setTotalRounds(rounds);
-            const matches = generateMatches(teams);
-            setMatches(matches);
         }
     }, [teams]);
 
@@ -53,13 +67,13 @@ const StreamPage = () => {
             const bettingPhaseDuration = 2500; // Betting phase duration (15 seconds)
             const interval = setInterval(() => {
                 if (currentRound < totalRounds) {
-                    console.log("Current Round:", currentRound);
+                    console.log("Current Round: ", currentRound);
+                    console.log("roundResults: " + roundResults)
                     setCurrentRound(prevRound => prevRound + 1);
                     setBettingEnabled(true); // Enable betting phase
                     playRound(matches[currentRound - 1]); // Play the next round
                     setTimeout(() => {
                         setBettingEnabled(false); // Disable betting after 15 seconds
-                        console.log("Matches:", matches); // Log matches before playing round
                     }, bettingPhaseDuration); // Wait for 15 seconds (betting phase)
                 } else {
                     clearInterval(interval);
@@ -113,7 +127,6 @@ const StreamPage = () => {
             score: goalsTeam1 > goalsTeam2 ? 1 : goalsTeam1 < goalsTeam2 ? 2 : 0, // Set score based on goals
         };
         allRoundResults.push(matchResult);
-        console.log(allRoundResults)
         setRoundResults(prevResults => [...prevResults, matchResult]);
     };
 
@@ -151,6 +164,7 @@ const StreamPage = () => {
             teamIndices.splice(1, 0, teamIndices.pop());
             matches.push(roundMatches);
         }
+        console.log("Matches: ", matches);
         return matches;
     };
 
@@ -253,9 +267,6 @@ const StreamPage = () => {
         ]);
     };
 
-
-
-
     const submitBets = () => {
         if (bettingForm.length === 0) {
             alert('Please place your bets before submitting.');
@@ -269,11 +280,11 @@ const StreamPage = () => {
             let betCorrect = true;
             allRoundResults.forEach(matchResult => {
                 if(matchResult.roundNumber === bet.roundNumber && matchResult.matchNumber === bet.matchNumber && matchResult.score !== bet.bet)
-                    {
+                {
 
-                        betCorrect = false;
-                        return;
-                    }
+                    betCorrect = false;
+                    return;
+                }
             });
             if (!betCorrect) {
                 allBetsCorrect = false;
