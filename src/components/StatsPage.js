@@ -81,7 +81,7 @@ const StatsPage = () => {
             <div>
                 <button className={"stats-info-b"} onClick={handleStream} style={{ width: '250px', marginTop: '50px', marginBottom: '-100px' }}>Back to Live</button>
             </div>
-            <div className={"tables-container"}>
+            <div className={"tables-container"} >
                 <BestAttack teams={teams} />
                 <BestDefence teams={teams} />
                 <InjuriesAndRedCardsTable teams={teams} />
