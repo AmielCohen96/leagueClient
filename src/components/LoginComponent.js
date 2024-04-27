@@ -47,7 +47,7 @@ const LoginComponent = () => {
 
     const startWithoutSignIn = () => {
         console.log('without')
-        window.location.href = '/stream-page';
+        window.location.href = '/without-login-stream';
     }
 
     const handleSignUp = () => {

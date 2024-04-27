@@ -1,6 +1,4 @@
-/*h2 {*/
-/*    margin-top: 0;*/
-/*}*/
+
 
 h3 {
     text-align: center;
@@ -84,13 +82,16 @@ td {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #7ecc7e; /* Example button color */
+    background-color: #c2fbd7; /* Example button color */
+    box-shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,rgba(44, 187, 99, .15) 0 1px 2px,rgba(44, 187, 99, .15) 0 2px 4px,rgba(44, 187, 99, .15) 0 4px 8px,rgba(44, 187, 99, .15) 0 8px 16px,rgba(44, 187, 99, .15) 0 16px 32px;
+    color: green;
     cursor: pointer;
     position: absolute;
     top: 50%;
     right: 10px;
     transform: translateY(-50%);
     margin-top: 0;
+    border-color: #282c34;
 }
 
 .circular-button::after {
@@ -117,4 +118,142 @@ td {
     align-items: center;
     margin: auto;
     width: 80%; /* Adjust the width as needed */
+}
+
+.minute-counter {
+    background-color: #ddd;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-bottom: 15px; /* Increase margin-bottom for spacing */
+    display: block; /* Change display to block */
+    border: 1px solid black;
+}
+
+.input {
+    margin-bottom: 10px;
+    margin-top: 10px;/* Add margin-bottom to create space */
+    width: 40px;
+    text-align: center;
+}
+
+.submitButton {
+    width: 100px;
+}
+
+.checkBoxes {
+    width: 20px;
+    height: 20px;
+    top: -25px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.odd {
+    position: relative;
+    top: -10px; /* Adjust the top position to add some space */
+    width: 100%; /* Ensure the odds div takes up the full width */
+    text-align: center; /* Center the odds text */
+}
+
+.checkbox-label {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input[type="checkbox"] {
+    /* ...existing styles */
+    display: grid;
+    place-content: center;
+}
+
+input[type="checkbox"]::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    transform: scale(0);
+}
+
+input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+input[type="checkbox"]::before {
+    /* ...existing styles */
+
+    /* Windows High Contrast Mode */
+    background-color: darkgreen;
+}
+
+.submitButton {
+    width: 100px;
+    background-color: #7ecc7e; /* Default color for enabled state */
+}
+
+.submitButtonDisabled {
+    width: 100px;
+    background-color: gray; /* Color for disabled state */
+}
+
+.tables-container {
+    margin-top: 100px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-start; /* Align items at the start */
+}
+
+.matches-container,
+.left-table {
+    width: 30%; /* Adjust width to accommodate the betting form */
+}
+
+.betting-form-container {
+    width: 30%; /* Adjust width to fit the form */
+}
+
+.minor-title-background {
+    background-color: #ddd;
+    padding: 5px 10px; /* Adjust padding to reduce height */
+    border-radius: 8px;
+    margin-bottom: 5px; /* Decrease margin-bottom */
+    display: block; /* Change display to block */
+    border: 1px solid black;
+}
+
+.Summary.form {
+    background-color: #ddd;
+    padding: 5px 10px; /* Adjust padding to reduce height */
+    border-radius: 8px;
+    margin-bottom: 5px; /* Decrease margin-bottom */
+    display: block; /* Change display to block */
+    border: 1px solid black;
+}
+
+.stats-info-b {
+    margin-top: 30px;
+    background-color: #c2fbd7;
+    border-radius: 100px;
+    box-shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,rgba(44, 187, 99, .15) 0 1px 2px,rgba(44, 187, 99, .15) 0 2px 4px,rgba(44, 187, 99, .15) 0 4px 8px,rgba(44, 187, 99, .15) 0 8px 16px,rgba(44, 187, 99, .15) 0 16px 32px;
+    color: green;
+    cursor: pointer;
+    display: inline-block;
+    font-family: CerebriSans-Regular,-apple-system,system-ui,Roboto,sans-serif;
+    padding: 7px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 250ms;
+    border: 0;
+    font-size: 16px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.stats-info-b:hover {
+    box-shadow: rgba(44,187,99,.35) 0 -25px 18px -14px inset,rgba(44,187,99,.25) 0 1px 2px,rgba(44,187,99,.25) 0 2px 4px,rgba(44,187,99,.25) 0 4px 8px,rgba(44,187,99,.25) 0 8px 16px,rgba(44,187,99,.25) 0 16px 32px;
+    transform: scale(1.05) rotate(-1deg);
+    color: #282c34;
+
 }

@@ -1,300 +1,305 @@
 import React, { useEffect, useState } from 'react';
 import './StreamPage.css';
 import axios from "axios";
+import { useLocation } from 'react-router-dom';
+
 
 const StreamPage = () => {
     const [teams, setTeams] = useState([]);
-    const [roundResults, setRoundResults] = useState([]);
     const [currentRound, setCurrentRound] = useState(1);
-    const [totalRounds, setTotalRounds] = useState(0);
-    const [matches, setMatches] = useState([]);
     const [seasonEnded, setSeasonEnded] = useState(false);
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
     const [bettingEnabled, setBettingEnabled] = useState(false); // Control betting phase
-    const [currentBets, setCurrentBets] = useState({}); // Store current bets
     const [selectedBets, setSelectedBets] = useState({});
     const [betAmount, setBetAmount] = useState(0);
-    const [bettingForm, setBettingForm] = useState([]);
-    const [allRoundResults, setAllRoundResults] = useState([]);
-    const [userBets, setUserBets] = useState({}); // Store user bets for each round
+    const [currentMatches, setCurrentMatches] = useState([]);
+    const [currentMinute, setCurrentMinute] = useState(1); // Current minute counter
+    const [showFinalResult, setShowFinalResult] = useState(false); // Flag to show final result
+    const [currentBetForm, setCurrentBetForm] = useState([]); // Holds current betting form
+    const [submittedForms, setSubmittedForms] = useState([]); // Holds all submitted forms
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialUsername = queryParams.get('username') || '';
+    const [username, setUsername] = useState(initialUsername);
+    const initialPassword = queryParams.get('password') || '';
+    const [password, setPassword] = useState(initialPassword);
+    const [userBalance, setUserBalance] = useState([]);
+
 
     useEffect(() => {
-        const fetchTeamsAndMatches = async () => {
+        // Function to fetch initial page details from the server
+        const fetchInitialPageDetails = async () => {
             try {
-                const response = await axios.get('http://localhost:9124/generateTeams');
-                const fetchedTeams = response.data;
-                setTeams(fetchedTeams);
-
-                // Generate matches based on fetched teams
-                const matches = generateMatches(fetchedTeams);
-                setMatches(matches);
-
-                // Extract username and password from URL params
-                const params = new URLSearchParams(window.location.search);
-                const username = params.get('username');
-                const password = params.get('password');
-                setUsername(username);
-                setPassword(password);
-
-                // Start the first round immediately after fetching teams and matches
-                setBettingEnabled(true);
-                setTimeout(() => {
-                    setBettingEnabled(false);
-                    playRound(matches[currentRound - 1]);
-                }, 10000); // 5 seconds for betting phase
+                const response = await axios.get('http://localhost:9124/init-page-details');
+                const { currentRound, teams, betEnable } = response.data;
+                setCurrentMatches(currentRound);
+                setTeams(teams);
+                setBettingEnabled(betEnable);
             } catch (error) {
-                console.error('Error fetching teams:', error);
+                console.error('Error fetching initial page details:', error);
+            }
+        };
+        const fetchUserBalance = async () => {
+            try {
+                // Make a request to fetch user balance using the username
+                const response = await axios.get('http://localhost:9124/get-user-balance', {
+                    params: {
+                        username: username
+                    }
+                });
+                console.log(response.data);
+                setUserBalance(response.data.balance);
+            } catch (error) {
+                console.error('Error fetching user balance:', error);
             }
         };
 
-        fetchTeamsAndMatches();
+        fetchInitialPageDetails();
+        fetchUserBalance(); // Fetch user balance when the component mounts
+        const storedSubmittedForms = sessionStorage.getItem('submittedForms');
+        if (storedSubmittedForms) {
+            setSubmittedForms(JSON.parse(storedSubmittedForms));
+        }
+        return () => {
+            // Clean up event listeners or subscriptions if needed
+        };
+    }, []); // Empty dependency array to fetch user balance only once when the component mounts
+
+
+
+    useEffect(() => {
+        const eventSource = new EventSource('http://localhost:9124/start-streaming');
+        eventSource.onmessage = function (event) {
+            const eventData = JSON.parse(event.data);
+            setCurrentRound(eventData.thisRoundNumber); // Update current round number
+            setCurrentMinute(eventData.currentMinute); // Update current minute
+            setCurrentMatches(eventData.currentRound); // Update current matches
+        };
+
+        eventSource.addEventListener('round-start', () => {
+            console.log("Betting phase started");
+            setBettingEnabled(true);
+            setShowFinalResult(false);
+            setCurrentMinute(0);
+            setSubmittedForms([]);
+        });
+
+        eventSource.addEventListener('betting-end', () => {
+            console.log("Betting phase ended");
+            setBettingEnabled(false);
+            setCurrentBetForm([]);
+            setSelectedBets({});
+        });
+
+        eventSource.addEventListener('round-end', () => {
+            console.log("Round ended");
+            axios.get('http://localhost:9124/update-table')
+                .then(response => {
+                    setTeams(response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+            setShowFinalResult(true);
+            setSubmittedForms(prevSubmittedForms => {
+                const updatedForms = [...prevSubmittedForms];
+                console.log("updatedForms: ", updatedForms )
+                if (updatedForms.length > 0) {
+                    checkWinningBets(updatedForms);
+                }
+                return updatedForms;
+            });
+            console.log("submittedForms: ", submittedForms)
+        });
+
+
+        eventSource.addEventListener('season-end', () => {
+            console.log("Season ended");
+            setSeasonEnded(true);
+        });
+
+        eventSource.addEventListener('season-start', () => {
+            console.log("Season has started");
+            axios.get('http://localhost:9124/update-table')
+                .then(response => {
+                    setTeams(response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+            setSeasonEnded(false);
+            // Handle season start here
+        });
+
+        return () => {
+            eventSource.close();
+        };
     }, []);
 
     useEffect(() => {
-        if (teams.length > 1) {
-            const totalTeams = teams.length;
-            const rounds = totalTeams - 1;
-            setTotalRounds(rounds);
-        }
-    }, [teams]);
-
-    useEffect(() => {
-        if (matches.length > 0) {
-            const roundDuration = 15000; // Total round duration (10 seconds)
-            const bettingPhaseDuration = 10000; // Betting phase duration (5 seconds)
-
-            const interval = setInterval(() => {
-                if (currentRound <= totalRounds - 1) {
-                    setCurrentRound(prevRound => prevRound + 1);
-
-                    // Enable betting phase for 5 seconds
-                    setBettingEnabled(true);
-                    setTimeout(() => {
-                        setBettingEnabled(false); // Disable betting after 5 seconds
-                    }, bettingPhaseDuration);
-
-                    // Wait for the remaining time of the round after betting phase
-                    setTimeout(() => {
-                        // End of betting phase, update league table
-                        updateLeagueTable();
-                        playRound(matches[currentRound - 1]);
-                    }, bettingPhaseDuration);
-
-                    // Play the round and simulate matches
-                } else {
-                    clearInterval(interval);
-                    setSeasonEnded(true);
-                }
-            }, roundDuration); // Change round every 10 seconds
-
-            return () => clearInterval(interval);
-        }
-    }, [currentRound, totalRounds, matches]);
-
-    useEffect(() => {
-        if (roundResults.length > 0) {
-            updateLeagueTable();
-        }
-    }, [roundResults]);
-
-    const simulateMatch = (team1, team2, matchId, round) => {
-        const goalsTeam1 = Math.floor(Math.random() * 5);
-        const goalsTeam2 = Math.floor(Math.random() * 5);
-
-        // Update team1's balance sheet
-        if (goalsTeam1 > goalsTeam2) {
-            team1.points += 3;
-        } else if (goalsTeam1 === goalsTeam2) {
-            team1.points += 1;
-        }
-        team1.goalsFor += goalsTeam1;
-        team1.goalsAgainst += goalsTeam2;
-
-        // Update team2's balance sheet
-        if (goalsTeam2 > goalsTeam1) {
-            team2.points += 3;
-        } else if (goalsTeam2 === goalsTeam1) {
-            team2.points += 1;
-        }
-        team2.goalsFor += goalsTeam2;
-        team2.goalsAgainst += goalsTeam1;
-
-        const matchResult = {
-            roundNumber: round,
-            matchNumber: matchId,
-            team1: team1.name,
-            team2: team2.name,
-            goalsTeam1,
-            goalsTeam2,
-            score: goalsTeam1 > goalsTeam2 ? 1 : goalsTeam1 < goalsTeam2 ? 2 : 0, // Set score based on goals
-        };
-        setAllRoundResults(prevResults => [...prevResults, matchResult]);
-        setRoundResults(prevResults => [...prevResults, matchResult]);
-    };
-
-    const playRound = (roundMatches) => {
-        setRoundResults([]); // Clear previous round results
-        roundMatches.forEach(match => {
-            const { team1, team2 } = match;
-            simulateMatch(team1, team2, match.matchNumber, match.roundNumber);
-        });
-    };
-
-    const generateMatches = (teams) => {
-        const matches = [];
-        const n = teams.length;
-        const teamIndices = Array.from({ length: n }, (_, index) => index);
-
-        for (let round = 0; round < n - 1; round++) {
-            const roundMatches = [];
-            for (let i = 0; i < n / 2; i++) {
-                const team1Index = teamIndices[i];
-                const team2Index = teamIndices[n - 1 - i];
-                const team1 = teams[team1Index];
-                const team2 = teams[team2Index];
-                const odds = calculateBettingOdds(team1.skills, team2.skills); // Calculate odds
-                roundMatches.push({
-                    roundNumber: round + 1,
-                    matchNumber: i + 1,
-                    team1,
-                    team2,
-                    team1Odd: odds.team1Win, // Add odds to match
-                    drawOdd: odds.draw,
-                    team2Odd: odds.team2Win
-                });
-            }
-            teamIndices.splice(1, 0, teamIndices.pop());
-            matches.push(roundMatches);
-        }
-        console.log("Matches: ", matches);
-        return matches;
-    };
-
-    const updateLeagueTable = () => {
-        const sortedTeams = [...teams].sort((a, b) => {
-            // Sort teams based on points
-            if (a.points !== b.points) {
-                return b.points - a.points;
-            }
-            // If points are equal, sort based on goal difference
-            const goalDifferenceA = a.goalsFor - a.goalsAgainst;
-            const goalDifferenceB = b.goalsFor - b.goalsAgainst;
-            if (goalDifferenceA !== goalDifferenceB) {
-                return goalDifferenceB - goalDifferenceA;
-            }
-            // If goal difference is equal, sort alphabetically by team name
-            return a.name.localeCompare(b.name);
-        });
-        setTeams(sortedTeams);
-    };
+        // Save submitted forms to sessionStorage whenever it changes
+        sessionStorage.setItem('submittedForms', JSON.stringify(submittedForms));
+    }, [submittedForms]);
 
     const handleProfile = () => {
         console.log('Redirecting to profile page...');
         window.location.href = '/profile-page';
     };
 
-    const calculateBettingOdds = (team1Skill, team2Skill) => {
-        // Step 1: Calculate the skill difference
-        const skillDifference = Math.abs(team1Skill - team2Skill);
-
-        // Step 2: Determine the base odds based on skill difference
-        let baseOddTeam1Win = 100 / (team1Skill + 1);
-        let baseOddTeam2Win = 100 / (team2Skill + 1);
-        let baseOddDraw = 100 / (skillDifference + 1);
-
-        // Step 3: Adjust the odds for each outcome
-        let oddTeam1Win = baseOddTeam1Win * (1 + skillDifference * 0.05);
-        let oddTeam2Win = baseOddTeam2Win * (1 + skillDifference * 0.05);
-        let oddDraw = (oddTeam1Win + oddTeam2Win) / 2;
-
-        // Step 4: Round the odds to two decimal places and round up to multiples of 5
-        oddTeam1Win = Math.ceil(oddTeam1Win * 20) / 20;
-        oddTeam2Win = Math.ceil(oddTeam2Win * 20) / 20;
-        oddDraw = Math.ceil(oddDraw * 20) / 20;
-
-        // Step 5: Ensure that all three odds are unique
-        if (oddTeam1Win === oddTeam2Win || oddTeam1Win === oddDraw) {
-            // Adjust one of the odds slightly to ensure uniqueness
-            oddTeam1Win += 0.01;
-        }
-        if ( oddTeam2Win === oddDraw){
-            oddDraw += 0.01;
-        }
-
-        return {
-            team1Win: oddTeam1Win,
-            draw: oddDraw,
-            team2Win: oddTeam2Win
-        };
-    };
 
     const handleAmountChange = (event) => {
         setBetAmount(event.target.value);
     };
 
-    const handleBet = (matchId, odds, result) => {
-        setSelectedBets(prevBets => {
-            const updatedBets = { ...prevBets };
-            if (updatedBets[matchId] === result) {
-                delete updatedBets[matchId];
-            } else {
-                updatedBets[matchId] = result;
-            }
-            return updatedBets;
-        });
 
-        setUserBets(prevBets => {
-            const roundNumber = currentRound;
-            const updatedBets = { ...prevBets };
-            if (!updatedBets[roundNumber]) {
-                updatedBets[roundNumber] = [];
-            }
-            updatedBets[roundNumber].push({
-                matchNumber: matchId,
-                bet: result,
-                odd: odds
-            });
-            return updatedBets;
-        });
-    };
-
-    const submitBets = () => {
-        if (Object.keys(userBets).length === 0) {
-            alert('Please place your bets before submitting.');
+    const submitBets = async () => {
+        if (betAmount <= 0) {
+            alert('Please enter a bet amount greater than 0.');
             return;
         }
 
-        let allBetsCorrect = true;
-
-        Object.entries(userBets).forEach(([roundNumber, bets]) => {
-            console.log("Round Number: " + roundNumber);
-            bets.forEach(bet => {
-                console.log("Match Number: " + bet.matchNumber);
-                console.log("Bet: " + bet.bet);
-                console.log("Odd: " + bet.odd);
-                const matchResult = allRoundResults.find(result => result.roundNumber === parseInt(roundNumber) && result.matchNumber === bet.matchNumber);
-                console.log("Match Result: ", matchResult);
-                if (!matchResult || matchResult.score !== bet.bet) {
-                    allBetsCorrect = false;
+        try {
+            // Fetch the user's balance
+            const balanceResponse = await axios.get('http://localhost:9124/get-user-balance', {
+                params: {
+                    username: username
                 }
             });
+
+            const userBalance = balanceResponse.data.balance;
+
+            if (userBalance >= betAmount) {
+                // If user has enough balance, subtract betAmount from userBalance
+                const newBalance = userBalance - betAmount;
+
+                // Update user balance on the server
+                const updateResponse = await axios.post('http://localhost:9124/update-user-balance', {
+                    username: username,
+                    amount: newBalance
+                });
+
+                if (updateResponse.data.success) {
+                    // Update userBalance state with new balance
+                    setUserBalance(newBalance);
+
+                    // Continue with submitting the bets
+                    const newBetForm = currentBetForm.map(bet => ({
+                        ...bet,
+                        roundNumber: currentRound,
+                        betAmount: betAmount,
+                    }));
+
+                    setSubmittedForms(prevForms => [...prevForms, newBetForm]);
+                    setCurrentBetForm([]);
+                    setSelectedBets({});
+                    setBetAmount(0);
+                } else {
+                    alert('Failed to update user balance. Please try again later.');
+                }
+            } else {
+                alert('You do not have enough money.');
+            }
+        } catch (error) {
+            console.error('Error submitting bets:', error);
+            alert('An error occurred while processing your request. Please try again later.');
+        }
+    };
+
+
+    const checkWinningBetsAndUpdateBalance = async (forms) => {
+        try {
+            const updatedForms = [];
+            let balanceChange;
+            console.log("forms: ", forms)
+            // Update user balance from the server
+            const response = await axios.get('http://localhost:9124/get-user-balance', {
+                params: {
+                    username: username
+                }
+            });
+            const newBalance = response.data.balance;
+            // Update user balance if it's not -1 (user found)
+            if (newBalance !== -1) {
+                balanceChange = newBalance;
+            } else {
+                console.error('User not found');
+            }
+            forms.forEach(form => {
+                console.log(form);
+                let oddsMultiply  = 1;
+                if(form[0].isFormWin){
+                    form.forEach(bet => {
+                        oddsMultiply  *= oddsMultiply *bet.odd;
+                    });
+                    balanceChange += oddsMultiply *form[0].betAmount;
+                }
+                updatedForms.push(form);
+            });
+            // Update the user balance on the server
+            await axios.post('http://localhost:9124/update-user-balance', {
+                username: username,
+                amount: balanceChange // Pass the updated balance
+            });
+
+            // Update the user balance state
+            setUserBalance(balanceChange);
+        } catch (error) {
+            console.error('Error updating user balance:', error);
+        }
+    };
+
+
+
+
+    const checkWinningBets = async (forms) => {
+        if(forms.length !== 0){
+            try {
+                console.log("unchecked: ",forms)
+                const response = await axios.post('http://localhost:9124/check-winning-bets', { forms });
+                const validatedForms = response.data;
+                console.log('Validated forms:', validatedForms);
+                await checkWinningBetsAndUpdateBalance(validatedForms);
+            } catch (error) {
+                console.error('Error checking winning bets:', error);
+            }
+        }
+    };
+
+    const handleCheckboxChange = (matchId, odds, result, name) => {
+        setSelectedBets(prevBets => {
+            const updatedBets = { ...prevBets };
+            if (updatedBets[matchId] !== result) {
+                updatedBets[matchId] = result;
+            } else {
+                delete updatedBets[matchId];
+                setCurrentBetForm(prevForm => prevForm.filter(bet => bet.matchNumber !== matchId));
+            }
+            return updatedBets;
         });
 
-        if (allBetsCorrect) {
-            alert('Congratulations! You won.');
-        } else {
-            alert('Sorry, you did not win this time.');
+        if (selectedBets[matchId] !== result) {
+            setCurrentBetForm(prevForm => {
+                const existingIndex = prevForm.findIndex(bet => bet.matchNumber === matchId);
+                if (existingIndex !== -1) {
+                    prevForm[existingIndex] = { roundNumber: currentRound, matchNumber: matchId, bet: result, odd: odds, dec: name };
+                } else {
+                    prevForm.push({ roundNumber: currentRound, matchNumber: matchId, bet: result, odd: odds, dec: name });
+                }
+                return prevForm;
+            });
         }
-
-        setUserBets({});
-        setBetAmount(0);
     };
+
+    const handleStats = () => {
+        console.log('Redirecting to stats page...');
+        window.location.href = `/stats?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+    };
+
 
     return (
         <div className="welcome-container">
             <div className="navigation-bar">
-                <h2>Hello {username}</h2>
+                <h2>Hello {username}, your current balance is: ${(Number(userBalance)).toFixed(2)}</h2>
+                <button className={"stats-info-b"} onClick={handleStats} style={{ width: '250px' }}>Stats and information</button>
                 <button onClick={handleProfile} className={"circular-button"}>P</button>
             </div>
             <div className="tables-container">
@@ -309,7 +314,6 @@ const StreamPage = () => {
                             <th>Goals For</th>
                             <th>Goals Against</th>
                             <th>Points</th>
-                            <th>Skills</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -319,15 +323,97 @@ const StreamPage = () => {
                                 <td>{team.goalsFor}</td>
                                 <td>{team.goalsAgainst}</td>
                                 <td>{team.points}</td>
-                                <td>{team.skills}</td>
                             </tr>
                         ))}
                         </tbody>
                     </table>
                 </div>
+                {bettingEnabled ? (<div className="betting-form-container">
+                        <div className="title-background">
+                            <h3>Betting Form</h3>
+                        </div>
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Round Number</th>
+                                <th>Match Number</th>
+                                <th>Bet</th>
+                                <th>Odd</th>
+                                <th>Team</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {currentBetForm.map((bet, index) => (
+                                <tr key={index}>
+                                    <td>{bet.roundNumber}</td>
+                                    <td>{bet.matchNumber}</td>
+                                    <td>{bet.bet === 0 ? 'Draw' : bet.bet}</td>
+                                    <td>{bet.odd}</td>
+                                    <td>{bet.dec}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                        <input
+                            type="number"
+                            value={betAmount}
+                            onChange={handleAmountChange}
+                            placeholder="Enter bet amount"
+                            className="input" // Add className for styling
+                        />
+                        <button className={bettingEnabled ? "submitButton" : "submitButtonDisabled"} onClick={submitBets} disabled={!bettingEnabled}>Submit Bets</button>
+                    </div>
+                ) : (
+                    <div className="submitted-forms-container">
+                        {submittedForms.length>0 && (<div className="title-background">
+                            <h3>Submitted Form</h3>
+                        </div>)}
+                        {submittedForms.map((form, index) => {
+                            // Calculate the total odds multiplier for the form
+                            const totalOddsMultiplier = form.reduce((acc, bet) => acc * bet.odd, 1);
+                            // Calculate the expected winning amount
+                            const expectedWinningAmount = totalOddsMultiplier * form[0].betAmount; // Assuming all bets in the form have the same bet amount
+                            return (
+                                <div key={index} className="submitted-form">
+                                    <div className="minor-title-background">
+                                        <h4>Submitted Form {index + 1}</h4>
+                                    </div>
+                                    <table>
+                                        <thead>
+                                        <tr>
+                                            <th>Round Number</th>
+                                            <th>Match Number</th>
+                                            <th>Bet</th>
+                                            <th>Odd</th>
+                                            <th>Team</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {form.map((bet, idx) => (
+                                            <tr key={idx}>
+                                                <td>{bet.roundNumber}</td>
+                                                <td>{bet.matchNumber}</td>
+                                                <td>{bet.bet === 0 ? 'Draw' : bet.bet}</td>
+                                                <td>{bet.odd}</td>
+                                                <td>{bet.dec}</td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                    <div className={"Summary form"}> <h5>Bet Amount: ${form[0].betAmount}, Odds Multiplier: {totalOddsMultiplier.toFixed(2)}, Expected Winning: ${expectedWinningAmount.toFixed(2)}</h5></div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
                 <div className="matches-container">
-                    <div className="title-background">
-                        <h3>Round {currentRound}</h3>
+                    <div>
+                        <div className="title-background">
+                            <h3>Round {currentRound}</h3>
+                        </div>
+                        {!bettingEnabled &&<div className="minute-counter">
+                            <h3>{showFinalResult ? "Final Result" : `${currentMinute}' Minute`}</h3>
+                        </div>}
                     </div>
                     <table>
                         <thead>
@@ -348,85 +434,59 @@ const StreamPage = () => {
                         </tr>
                         </thead>
                         <tbody>
-                        {matches[currentRound - 1] && matches[currentRound - 1].map((match, index) => (
+                        {currentMatches.map((match, index) => (
                             <tr key={index}>
-                                <td>{match.team1.name}</td>
+                                <td>{match.homeTeam}</td>
                                 {bettingEnabled ? (
                                     <>
                                         <td>
-                                            <button
-                                                className={`bet-button ${selectedBets[match.matchNumber] === 1 ? 'selected-button' : ''}`}
-                                                disabled={selectedBets[match.matchNumber] !== undefined}
-                                                onClick={() => handleBet(match.matchNumber, match.team1Odd, 1)}
-                                            >
-                                                {match.team1Odd}
-                                            </button>
+                                            <label className="checkbox-label">
+                                                <input
+                                                    className="checkBoxes"
+                                                    type="checkbox"
+                                                    checked={selectedBets[match.match] === 1}
+                                                    onChange={() => handleCheckboxChange(match.match, match.homeOdd, 1, match.homeTeam)}
+                                                />
+                                                <div className="odd">{match.homeOdd}</div>
+                                            </label>
                                         </td>
                                         <td>
-                                            <button
-                                                className={`bet-button ${selectedBets[match.matchNumber] === 0 ? 'selected-button' : ''}`}
-                                                disabled={selectedBets[match.matchNumber] !== undefined}
-                                                onClick={() => handleBet(match.matchNumber, match.drawOdd, 0)}
-                                            >
-                                                {match.drawOdd}
-                                            </button>
+                                            <label className="checkbox-label">
+                                                <input
+                                                    className={"checkBoxes"}
+                                                    type="checkbox"
+                                                    checked={selectedBets[match.match] === 0}
+                                                    onChange={() => handleCheckboxChange(match.match, match.drawOdd, 0, 'X')}
+                                                />
+                                                <div className="odd">{match.drawOdd}</div>
+                                            </label>
                                         </td>
                                         <td>
-                                            <button
-                                                className={`bet-button ${selectedBets[match.matchNumber] === 2 ? 'selected-button' : ''}`}
-                                                disabled={selectedBets[match.matchNumber] !== undefined}
-                                                onClick={() => handleBet(match.matchNumber, match.team2Odd, 2)}
-                                            >
-                                                {match.team2Odd}
-                                            </button>
+                                            <label className="checkbox-label">
+                                                <input
+                                                    className={"checkBoxes"}
+                                                    type="checkbox"
+                                                    checked={selectedBets[match.match] === 2}
+                                                    onChange={() => handleCheckboxChange(match.match, match.awayOdd, 2, match.awayTeam)}
+                                                />
+                                                <div className="odd">{match.awayOdd}</div>
+                                            </label>
                                         </td>
                                     </>
+
                                 ) : (
                                     <>
-                                        <td>{roundResults[index]?.goalsTeam1} - {roundResults[index]?.goalsTeam2}</td>
+                                        <td>{match.homeGoals} - {match.awayGoals}</td>
                                     </>
                                 )}
-                                <td>{match.team2.name}</td>
+                                <td>{match.awayTeam}</td>
                             </tr>
                         ))}
                         </tbody>
                     </table>
-                    {bettingEnabled && matches.length > 0 && (
-                        <div className="betting-form">
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th>Round Number</th>
-                                    <th>Match Number</th>
-                                    <th>Selected Option</th>
-                                    <th>Odds</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {Object.entries(userBets).map(([roundNumber, bets]) => (
-                                    bets.map((bet, index) => (
-                                        <tr key={index}>
-                                            <td>{roundNumber}</td>
-                                            <td>{bet.matchNumber}</td>
-                                            <td>{bet.bet === 0 ? 'Draw' : bet.bet === 1 ? 'Home Win' : 'Away Win'}</td>
-                                            <td>{bet.odd}</td>
-                                        </tr>
-                                    ))
-                                ))}
-                                </tbody>
-                            </table>
-                            <input
-                                type="number"
-                                value={betAmount}
-                                onChange={handleAmountChange}
-                                placeholder="Enter bet amount"
-                            />
-                            <button onClick={submitBets}>Submit Bets</button>
-                        </div>
-                    )}
                 </div>
-                {seasonEnded && <p>The season has ended!</p>}
             </div>
+            {seasonEnded && <p>The season has ended!</p>}
         </div>
     );
 };

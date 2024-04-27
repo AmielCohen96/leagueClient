@@ -5,7 +5,9 @@
   "version": "0.1.0",
 
   "private": true,
+
   "proxy": "http://localhost:your_backend_port",
+
   "dependencies": {
 
     "@testing-library/jest-dom": "^5.17.0",
@@ -20,7 +22,7 @@
 
     "react-dom": "^18.2.0",
 
-    "react-router-dom": "^6.22.3",
+    "react-router-dom": "^6.23.0",
 
     "react-scripts": "5.0.1",
 

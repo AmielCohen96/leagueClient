@@ -46,8 +46,9 @@
 
 }
 
-.app-container {
 
+.app-container {
+  text-align: center;
 }
 
 .App-link {

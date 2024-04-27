@@ -1,3 +1,5 @@
+// App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LoginComponent from './components/LoginComponent';
@@ -5,20 +7,13 @@ import SignupComponent from './components/SignupComponent';
 import StreamPage from './components/StreamPage';
 import ProfilePage from './components/ProfilePage';
 import './App.css'; // Import your CSS file
-import backgroundImg from './images/football.jpeg';
+import WithoutLoginStream from "./components/WithoutLoginStream";
+import StatsPage from "./components/StatsPage";
+import BackgroundWrapper from './BackgroundWrapper'; // Import the BackgroundWrapper component
 
 const App = () => {
-    const appStyle = {
-        backgroundImage: `url(${backgroundImg})`, // Use the imported image
-        backgroundSize: 'cover', // Adjust as needed
-        backgroundPosition: 'center', // Adjust as needed
-        // Other styles for your component
-        width: '100vw', // Ensure full width of the screen
-        height: '100vh', // Ensure full height of the screen
-    };
-
     return (
-        <div className="App" style={appStyle}>
+        <BackgroundWrapper> {/* Wrap the entire App component with the BackgroundWrapper */}
             <Router>
                 <div className="app-container">
                     <Routes>
@@ -26,10 +21,12 @@ const App = () => {
                         <Route path="/signup" element={<SignupComponent />} />
                         <Route path="/stream-page" element={<StreamPage />} />
                         <Route path="/profile-page" element={<ProfilePage />} />
+                        <Route path="/without-login-stream" element={<WithoutLoginStream />} />
+                        <Route path="/stats" element={<StatsPage />} />
                     </Routes>
                 </div>
             </Router>
-        </div>
+        </BackgroundWrapper>
     );
 };
 

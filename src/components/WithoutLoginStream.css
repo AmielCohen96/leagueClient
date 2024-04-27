@@ -1,0 +1,154 @@
+
+h3 {
+    text-align: center;
+    margin: 0;
+}
+
+.tables-container {
+    margin-top: 100px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.left-table,
+.right-table {
+    width: 45%;
+    overflow: hidden;
+}
+
+.left-table table,
+.right-table table {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f0f0f0;
+    border-radius: 15px;
+}
+tr:nth-child(even) {background-color: #E2F4C5;}
+
+
+th,
+td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+}
+
+.title-background {
+    background-color: #ddd;
+    padding: 15px 30px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: inline-block; /*huh*/
+    border: 1px solid black;
+}
+
+.button-container {
+    text-align: center;
+    margin-top: 10px;
+    width: 50%;
+    margin: 10px auto; /* Center the button container */
+}
+
+.button-container button {
+    padding: 8px 16px;
+    font-size: 18px;
+    width: 200px;
+}
+
+.navigation-bar-W {
+    display: flex;
+    justify-content: space-between; /* Align elements at the start and end of the navigation bar */
+    align-items: center; /* Vertically center items */
+    background-color: #f0f0f0;
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid black;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    padding: 0 20px; /* Add padding to create space around elements */
+}
+
+.login-register-w {
+    display: flex; /* Use flexbox for layout */
+    align-items: center; /* Align items vertically */
+}
+
+.login-register-w > * {
+    margin-right: 10px; /* Add some space between elements */
+}
+
+.login-register-w input,
+.login-register-w button {
+    width: 100px; /* Set width for inputs and buttons */
+}
+
+
+.navigation-bar h2 {
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    line-height: 50px; /* Vertically center the text */
+    margin-right: 60px; /* Space for the button */
+}
+
+
+.minute-counter {
+    background-color: #ddd;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-bottom: 15px; /* Increase margin-bottom for spacing */
+    display: block; /* Change display to block */
+    border: 1px solid black;
+}
+
+
+.tables-container {
+    margin-top: 100px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-start; /* Align items at the start */
+}
+
+.matches-container,
+.left-table {
+    width: 30%; /* Adjust width to accommodate the betting form */
+}
+
+.betting-form-container {
+    width: 30%; /* Adjust width to fit the form */
+}
+
+.minor-title-background {
+    background-color: #ddd;
+    padding: 5px 10px; /* Adjust padding to reduce height */
+    border-radius: 8px;
+    margin-bottom: 5px; /* Decrease margin-bottom */
+    display: block; /* Change display to block */
+    border: 1px solid black;
+}
+
+.textBox-LP {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-top: 15px;
+}
+
+.button-LP{
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #7ecc7e;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 5px;
+}
