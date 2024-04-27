@@ -46,7 +46,6 @@ const StreamPage = () => {
                         username: username
                     }
                 });
-                console.log(response.data);
                 setUserBalance(response.data.balance);
             } catch (error) {
                 console.error('Error fetching user balance:', error);
@@ -102,13 +101,11 @@ const StreamPage = () => {
             setShowFinalResult(true);
             setSubmittedForms(prevSubmittedForms => {
                 const updatedForms = [...prevSubmittedForms];
-                console.log("updatedForms: ", updatedForms )
                 if (updatedForms.length > 0) {
                     checkWinningBets(updatedForms);
                 }
                 return updatedForms;
             });
-            console.log("submittedForms: ", submittedForms)
         });
 
 
@@ -209,7 +206,6 @@ const StreamPage = () => {
         try {
             const updatedForms = [];
             let balanceChange;
-            console.log("forms: ", forms)
             // Update user balance from the server
             const response = await axios.get('http://localhost:9124/get-user-balance', {
                 params: {
@@ -224,7 +220,6 @@ const StreamPage = () => {
                 console.error('User not found');
             }
             forms.forEach(form => {
-                console.log(form);
                 let oddsMultiply  = 1;
                 if(form[0].isFormWin){
                     form.forEach(bet => {
@@ -253,10 +248,8 @@ const StreamPage = () => {
     const checkWinningBets = async (forms) => {
         if(forms.length !== 0){
             try {
-                console.log("unchecked: ",forms)
                 const response = await axios.post('http://localhost:9124/check-winning-bets', { forms });
                 const validatedForms = response.data;
-                console.log('Validated forms:', validatedForms);
                 await checkWinningBetsAndUpdateBalance(validatedForms);
             } catch (error) {
                 console.error('Error checking winning bets:', error);

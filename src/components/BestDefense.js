@@ -2,7 +2,7 @@ import React from 'react';
 
 
 const BestDefense= ({ teams }) => {
-    const fewestScorers = teams.slice().sort((a, b) => a.goalsFor - b.goalsFor).slice(0, 5);
+    const fewestScorers = teams.slice().sort((a, b) => a.goalsAgainst - b.goalsAgainst).slice(0, 5);
 
     return (
         <div>
@@ -18,7 +18,7 @@ const BestDefense= ({ teams }) => {
                 {fewestScorers.map(team => (
                     <tr key={team.id}>
                         <td>{team.name}</td>
-                        <td>{team.goalsFor}</td>
+                        <td>{team.goalsAgainst}</td>
                     </tr>
                 ))}
                 </tbody>

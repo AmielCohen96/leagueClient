@@ -25,14 +25,12 @@ const StatsPage = () => {
             try {
                 const response = await axios.get('http://localhost:9124/init-page-details');
                 const { currentRound, teams, betEnable } = response.data;
-                console.log(response.data)
                 setCurrentRound(currentRound[0].round)
                 setTeams(teams);
             } catch (error) {
                 console.error('Error fetching initial page details:', error);
             }
         };
-        console.log(teams)
         fetchInitialPageDetails();
 
         return () => {
@@ -53,7 +51,6 @@ const StatsPage = () => {
                 .catch(error => {
                     console.error('Error fetching data:', error);
                 });
-            console.log(teams)
         });
 
 
