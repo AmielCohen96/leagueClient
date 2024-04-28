@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import './StreamPage.css';
 import axios from "axios";
 import { useLocation } from 'react-router-dom';
+import NavigationBar from './NavigationBar';
+import LeagueTable from './LeagueTable';
+import BettingForm from './BettingForm';
+import SubmittedForms from './SubmittedForms';
+import MatchesContainer from './MatchesContainer';
 
 
 const StreamPage = () => {
@@ -290,194 +295,38 @@ const StreamPage = () => {
 
     return (
         <div className="welcome-container">
-            <div className="navigation-bar">
-                <h2>Hello {username}, your current balance is: ${(Number(userBalance)).toFixed(2)}</h2>
-                <button className={"stats-info-b"} onClick={handleStats} style={{ width: '250px' }}>Stats and information</button>
-                <button onClick={handleProfile} className={"circular-button"}>P</button>
-            </div>
+            <NavigationBar
+                username={username}
+                userBalance={userBalance}
+                handleStats={handleStats}
+                handleProfile={handleProfile}
+            />
             <div className="tables-container">
-                <div className="left-table">
-                    <div className="title-background">
-                        <h3>League table</h3>
-                    </div>
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Goals For</th>
-                            <th>Goals Against</th>
-                            <th>Points</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {teams.map((team, index) => (
-                            <tr key={index}>
-                                <td>{team.name}</td>
-                                <td>{team.goalsFor}</td>
-                                <td>{team.goalsAgainst}</td>
-                                <td>{team.points}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-                {bettingEnabled ? (<div className="betting-form-container">
-                        <div className="title-background">
-                            <h3>Betting Form</h3>
-                        </div>
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Round Number</th>
-                                <th>Match Number</th>
-                                <th>Bet</th>
-                                <th>Odd</th>
-                                <th>Team</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {currentBetForm.map((bet, index) => (
-                                <tr key={index}>
-                                    <td>{bet.roundNumber}</td>
-                                    <td>{bet.matchNumber}</td>
-                                    <td>{bet.bet === 0 ? 'Draw' : bet.bet}</td>
-                                    <td>{bet.odd}</td>
-                                    <td>{bet.dec}</td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                        <input
-                            type="number"
-                            value={betAmount}
-                            onChange={handleAmountChange}
-                            placeholder="Enter bet amount"
-                            className="input" // Add className for styling
-                        />
-                        <button className={bettingEnabled ? "submitButton" : "submitButtonDisabled"} onClick={submitBets} disabled={!bettingEnabled}>Submit Bets</button>
-                    </div>
+                <LeagueTable teams={teams} />
+                {bettingEnabled ? (
+                    <BettingForm
+                        currentBetForm={currentBetForm}
+                        betAmount={betAmount}
+                        handleAmountChange={handleAmountChange}
+                        submitBets={submitBets}
+                        bettingEnabled={bettingEnabled}
+                    />
                 ) : (
-                    <div className="submitted-forms-container">
-                        {submittedForms.length>0 && (<div className="title-background">
-                            <h3>Submitted Form</h3>
-                        </div>)}
-                        {submittedForms.map((form, index) => {
-                            // Calculate the total odds multiplier for the form
-                            const totalOddsMultiplier = form.reduce((acc, bet) => acc * bet.odd, 1);
-                            // Calculate the expected winning amount
-                            const expectedWinningAmount = totalOddsMultiplier * form[0].betAmount; // Assuming all bets in the form have the same bet amount
-                            return (
-                                <div key={index} className="submitted-form">
-                                    <div className="minor-title-background">
-                                        <h4>Submitted Form {index + 1}</h4>
-                                    </div>
-                                    <table>
-                                        <thead>
-                                        <tr>
-                                            <th>Round Number</th>
-                                            <th>Match Number</th>
-                                            <th>Bet</th>
-                                            <th>Odd</th>
-                                            <th>Team</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {form.map((bet, idx) => (
-                                            <tr key={idx}>
-                                                <td>{bet.roundNumber}</td>
-                                                <td>{bet.matchNumber}</td>
-                                                <td>{bet.bet === 0 ? 'Draw' : bet.bet}</td>
-                                                <td>{bet.odd}</td>
-                                                <td>{bet.dec}</td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                    <div className={"Summary form"}> <h5>Bet Amount: ${form[0].betAmount}, Odds Multiplier: {totalOddsMultiplier.toFixed(2)}, Expected Winning: ${expectedWinningAmount.toFixed(2)}</h5></div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <SubmittedForms
+                        submittedForms={submittedForms}
+                        showFinalResult={showFinalResult}
+                        checkWinningBetsAndUpdateBalance={checkWinningBetsAndUpdateBalance}
+                    />
                 )}
-                <div className="matches-container">
-                    <div>
-                        <div className="title-background">
-                            <h3>Round {currentRound}</h3>
-                        </div>
-                        {!bettingEnabled &&<div className="minute-counter">
-                            <h3>{showFinalResult ? "Final Result" : `${currentMinute}' Minute`}</h3>
-                        </div>}
-                    </div>
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Home team</th>
-                            {bettingEnabled ? (
-                                <>
-                                    <th>1</th>
-                                    <th>X</th>
-                                    <th>2</th>
-                                </>
-                            ) : (
-                                <>
-                                    <th>Score</th>
-                                </>
-                            )}
-                            <th>Away team</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {currentMatches.map((match, index) => (
-                            <tr key={index}>
-                                <td>{match.homeTeam}</td>
-                                {bettingEnabled ? (
-                                    <>
-                                        <td>
-                                            <label className="checkbox-label">
-                                                <input
-                                                    className="checkBoxes"
-                                                    type="checkbox"
-                                                    checked={selectedBets[match.match] === 1}
-                                                    onChange={() => handleCheckboxChange(match.match, match.homeOdd, 1, match.homeTeam)}
-                                                />
-                                                <div className="odd">{match.homeOdd}</div>
-                                            </label>
-                                        </td>
-                                        <td>
-                                            <label className="checkbox-label">
-                                                <input
-                                                    className={"checkBoxes"}
-                                                    type="checkbox"
-                                                    checked={selectedBets[match.match] === 0}
-                                                    onChange={() => handleCheckboxChange(match.match, match.drawOdd, 0, 'X')}
-                                                />
-                                                <div className="odd">{match.drawOdd}</div>
-                                            </label>
-                                        </td>
-                                        <td>
-                                            <label className="checkbox-label">
-                                                <input
-                                                    className={"checkBoxes"}
-                                                    type="checkbox"
-                                                    checked={selectedBets[match.match] === 2}
-                                                    onChange={() => handleCheckboxChange(match.match, match.awayOdd, 2, match.awayTeam)}
-                                                />
-                                                <div className="odd">{match.awayOdd}</div>
-                                            </label>
-                                        </td>
-                                    </>
-
-                                ) : (
-                                    <>
-                                        <td>{match.homeGoals} - {match.awayGoals}</td>
-                                    </>
-                                )}
-                                <td>{match.awayTeam}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
+                <MatchesContainer
+                    currentMatches={currentMatches}
+                    bettingEnabled={bettingEnabled}
+                    selectedBets={selectedBets}
+                    handleCheckboxChange={handleCheckboxChange}
+                    currentRound = {currentRound}
+                    showFinalResult = {showFinalResult}
+                    currentMinute = {currentMinute}
+                />
             </div>
             {seasonEnded && <p>The season has ended!</p>}
         </div>
