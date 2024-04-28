@@ -298,9 +298,9 @@ const StreamPage = () => {
             <NavigationBar
                 username={username}
                 userBalance={userBalance}
-                handleStats={handleStats}
                 handleProfile={handleProfile}
             />
+            <button className={"stats-info-b"} onClick={handleStats} style={{ width: '250px' }}>Stats and information</button>
             <div className="tables-container">
                 <LeagueTable teams={teams} />
                 {bettingEnabled ? (

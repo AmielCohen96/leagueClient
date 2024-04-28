@@ -6,6 +6,7 @@ import InjuriesAndRedCardsTable from "./InjuriesAndRedCardsTable"; // Import the
 import BestAttack from "./BestAttack"
 import BestDefence from "./BestDefense"
 import LastGames from "./LastGames"
+import NavigationBar from "./NavigationBar";
 
 
 const StatsPage = () => {
@@ -17,6 +18,7 @@ const StatsPage = () => {
     const [username, setUsername] = useState(initialUsername);
     const initialPassword = queryParams.get('password') || '';
     const [password, setPassword] = useState(initialPassword);
+    const [userBalance, setUserBalance] = useState([]);
 
 
     useEffect(() => {
@@ -30,8 +32,22 @@ const StatsPage = () => {
             } catch (error) {
                 console.error('Error fetching initial page details:', error);
             }
+        };const fetchUserBalance = async () => {
+            try {
+                // Make a request to fetch user balance using the username
+                const response = await axios.get('http://localhost:9124/get-user-balance', {
+                    params: {
+                        username: username
+                    }
+                });
+                setUserBalance(response.data.balance);
+            } catch (error) {
+                console.error('Error fetching user balance:', error);
+            }
         };
+
         fetchInitialPageDetails();
+        fetchUserBalance(); // Fetch user balance when the component mounts
 
         return () => {
             // Clean up event listeners or subscriptions if needed
@@ -42,7 +58,7 @@ const StatsPage = () => {
     useEffect(() => {
         const eventSource = new EventSource('http://localhost:9124/start-streaming');
 
-        eventSource.addEventListener('round-end', () => {
+        eventSource.addEventListener('round-end', async () => {
             console.log("Round ended");
             axios.get('http://localhost:9124/update-table')
                 .then(response => {
@@ -51,6 +67,13 @@ const StatsPage = () => {
                 .catch(error => {
                     console.error('Error fetching data:', error);
                 });
+            const response = await axios.get('http://localhost:9124/get-user-balance', {
+                params: {
+                    username: username
+                }
+            });
+            const newBalance = response.data.balance;
+            setUserBalance(newBalance);
         });
 
 
@@ -76,8 +99,19 @@ const StatsPage = () => {
         window.location.href = `/stream-page?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
     };
 
+    const handleProfile = () => {
+        console.log('Redirecting to profile page...');
+        window.location.href = '/profile-page';
+    };
+
+
     return (
         <div className={"stats-info"}>
+            <NavigationBar
+                username={username}
+                userBalance={userBalance}
+                handleProfile={handleProfile}
+            />
             <div>
                 <button className={"stats-info-b"} onClick={handleStream} style={{ width: '250px', marginTop: '50px', marginBottom: '-100px' }}>Back to Live</button>
             </div>

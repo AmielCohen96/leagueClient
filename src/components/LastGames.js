@@ -25,9 +25,7 @@ const LastGames = ({ teams }) => {
                 <thead>
                 <tr>
                     <th>Team Name</th>
-                    <th>Game 1</th>
-                    <th>Game 2</th>
-                    <th>Game 3</th>
+                    <th colSpan="3">Last 3 Games</th> {/* Merge header cells */}
                 </tr>
                 </thead>
                 <tbody>
@@ -35,7 +33,7 @@ const LastGames = ({ teams }) => {
                     <tr key={team.id}>
                         <td>{team.name}</td>
                         {/* Displaying last game results with cell color */}
-                        {team.lastGames.map((result, index) => (
+                        {team.lastGames.slice(-3).map((result, index) => (
                             <td key={index} style={{ color: getCellColor(result) }}>
                                 {result}
                             </td>
