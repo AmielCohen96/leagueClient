@@ -41,9 +41,9 @@ const MatchesContainer = ({ currentMatches, bettingEnabled, selectedBets, handle
                                             className="checkBoxes"
                                             type="checkbox"
                                             checked={selectedBets[match.match] === 1}
-                                            onChange={() => handleCheckboxChange(match.match, match.homeOdd, 1, match.homeTeam)}
+                                            onChange={() => handleCheckboxChange(match.match, (Number(match.homeOdd)).toFixed(2), 1, match.homeTeam)}
                                         />
-                                        <div className="odd">{match.homeOdd}</div>
+                                        <div className="odd">{(Number(match.homeOdd)).toFixed(2)}</div>
                                     </label>
                                 </td>
                                 <td>
@@ -52,9 +52,9 @@ const MatchesContainer = ({ currentMatches, bettingEnabled, selectedBets, handle
                                             className={"checkBoxes"}
                                             type="checkbox"
                                             checked={selectedBets[match.match] === 0}
-                                            onChange={() => handleCheckboxChange(match.match, match.drawOdd, 0, 'X')}
+                                            onChange={() => handleCheckboxChange(match.match, (Number(match.drawOdd)).toFixed(2), 0, 'X')}
                                         />
-                                        <div className="odd">{match.drawOdd}</div>
+                                        <div className="odd">{(Number(match.drawOdd)).toFixed(2)}</div>
                                     </label>
                                 </td>
                                 <td>
@@ -63,9 +63,9 @@ const MatchesContainer = ({ currentMatches, bettingEnabled, selectedBets, handle
                                             className={"checkBoxes"}
                                             type="checkbox"
                                             checked={selectedBets[match.match] === 2}
-                                            onChange={() => handleCheckboxChange(match.match, match.awayOdd, 2, match.awayTeam)}
+                                            onChange={() => handleCheckboxChange(match.match, (Number(match.awayOdd)).toFixed(2), 2, match.awayTeam)}
                                         />
-                                        <div className="odd">{match.awayOdd}</div>
+                                        <div className="odd">{(Number(match.awayOdd)).toFixed(2)}</div>
                                     </label>
                                 </td>
                             </>

@@ -10,6 +10,7 @@ import './App.css'; // Import your CSS file
 import WithoutLoginStream from "./components/WithoutLoginStream";
 import StatsPage from "./components/StatsPage";
 import BackgroundWrapper from './BackgroundWrapper'; // Import the BackgroundWrapper component
+import CheckedForms from "./components/CheckedForms";
 
 const App = () => {
     return (
@@ -23,6 +24,7 @@ const App = () => {
                         <Route path="/profile-page" element={<ProfilePage />} />
                         <Route path="/without-login-stream" element={<WithoutLoginStream />} />
                         <Route path="/stats" element={<StatsPage />} />
+                        <Route path="/checked-forms" element={<CheckedForms />} />
                     </Routes>
                 </div>
             </Router>

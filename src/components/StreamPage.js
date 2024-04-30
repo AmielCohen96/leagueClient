@@ -35,10 +35,12 @@ const StreamPage = () => {
         const fetchInitialPageDetails = async () => {
             try {
                 const response = await axios.get('http://localhost:9124/init-page-details');
-                const { currentRound, teams, betEnable } = response.data;
+                const { currentRound, teams, betEnable, submittedForms, current } = response.data;
                 setCurrentMatches(currentRound);
                 setTeams(teams);
                 setBettingEnabled(betEnable);
+                setSubmittedForms(submittedForms);
+                setCurrentRound(current);
             } catch (error) {
                 console.error('Error fetching initial page details:', error);
             }
@@ -154,8 +156,11 @@ const StreamPage = () => {
 
 
     const submitBets = async () => {
-        if (betAmount <= 0) {
-            alert('Please enter a bet amount greater than 0.');
+        // Ensure that betAmount is properly parsed as a number
+        const parsedBetAmount = parseFloat(betAmount);
+
+        if (parsedBetAmount <= 0 || isNaN(parsedBetAmount)) {
+            alert('Please enter a valid bet amount greater than 0.');
             return;
         }
 
@@ -169,9 +174,9 @@ const StreamPage = () => {
 
             const userBalance = balanceResponse.data.balance;
 
-            if (userBalance >= betAmount) {
-                // If user has enough balance, subtract betAmount from userBalance
-                const newBalance = userBalance - betAmount;
+            if (userBalance >= parsedBetAmount) {
+                // If user has enough balance, subtract parsedBetAmount from userBalance
+                const newBalance = userBalance - parsedBetAmount;
 
                 // Update user balance on the server
                 const updateResponse = await axios.post('http://localhost:9124/update-user-balance', {
@@ -187,13 +192,23 @@ const StreamPage = () => {
                     const newBetForm = currentBetForm.map(bet => ({
                         ...bet,
                         roundNumber: currentRound,
-                        betAmount: betAmount,
+                        betAmount: parsedBetAmount, // Use parsedBetAmount here
                     }));
 
-                    setSubmittedForms(prevForms => [...prevForms, newBetForm]);
-                    setCurrentBetForm([]);
-                    setSelectedBets({});
-                    setBetAmount(0);
+                    const saveResponse = await axios.post('http://localhost:9124/save-bets', {
+                        bets: newBetForm
+                    });
+
+                    if (saveResponse.data.success) {
+                        // Clear current bet form and selected bets
+                        setCurrentBetForm([]);
+                        setSelectedBets({});
+                        setBetAmount(0);
+                        // Update submitted forms state with the saved bets
+                        setSubmittedForms(prevForms => [...prevForms, newBetForm]);
+                    } else {
+                        alert('Failed to save bets. Please try again later.');
+                    }
                 } else {
                     alert('Failed to update user balance. Please try again later.');
                 }
@@ -207,55 +222,21 @@ const StreamPage = () => {
     };
 
 
-    const checkWinningBetsAndUpdateBalance = async (forms) => {
-        try {
-            const updatedForms = [];
-            let balanceChange;
-            // Update user balance from the server
-            const response = await axios.get('http://localhost:9124/get-user-balance', {
-                params: {
-                    username: username
-                }
-            });
-            const newBalance = response.data.balance;
-            // Update user balance if it's not -1 (user found)
-            if (newBalance !== -1) {
-                balanceChange = newBalance;
-            } else {
-                console.error('User not found');
-            }
-            forms.forEach(form => {
-                let oddsMultiply  = 1;
-                if(form[0].isFormWin){
-                    form.forEach(bet => {
-                        oddsMultiply  *= oddsMultiply *bet.odd;
-                    });
-                    balanceChange += oddsMultiply *form[0].betAmount;
-                }
-                updatedForms.push(form);
-            });
-            // Update the user balance on the server
-            await axios.post('http://localhost:9124/update-user-balance', {
-                username: username,
-                amount: balanceChange // Pass the updated balance
-            });
-
-            // Update the user balance state
-            setUserBalance(balanceChange);
-        } catch (error) {
-            console.error('Error updating user balance:', error);
-        }
-    };
-
-
-
-
     const checkWinningBets = async (forms) => {
         if(forms.length !== 0){
             try {
-                const response = await axios.post('http://localhost:9124/check-winning-bets', { forms });
-                const validatedForms = response.data;
-                await checkWinningBetsAndUpdateBalance(validatedForms);
+                const response2 = await axios.post('http://localhost:9124/check-winning-bets', {
+                    username: username,
+                });
+                const response3 = await axios.get('http://localhost:9124/get-user-balance', {
+                    params: {
+                        username: username
+                    }
+                });
+                let newBalance = response3.data.balance;
+                setUserBalance(newBalance);
+                const validatedForms = response2.data;
+                console.log(validatedForms)
             } catch (error) {
                 console.error('Error checking winning bets:', error);
             }
@@ -292,6 +273,11 @@ const StreamPage = () => {
         window.location.href = `/stats?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
     };
 
+    const handleCheckedForms = () => {
+        console.log('Redirecting to stats page...');
+        window.location.href = `/checked-forms?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+    };
+
 
     return (
         <div className="welcome-container">
@@ -301,6 +287,7 @@ const StreamPage = () => {
                 handleProfile={handleProfile}
             />
             <button className={"stats-info-b"} onClick={handleStats} style={{ width: '250px' }}>Stats and information</button>
+            <button className={"stats-info-b"} onClick={handleCheckedForms} style={{ width: '250px' }}>Checked Forms</button>
             <div className="tables-container">
                 <LeagueTable teams={teams} />
                 {bettingEnabled ? (
@@ -315,7 +302,6 @@ const StreamPage = () => {
                     <SubmittedForms
                         submittedForms={submittedForms}
                         showFinalResult={showFinalResult}
-                        checkWinningBetsAndUpdateBalance={checkWinningBetsAndUpdateBalance}
                     />
                 )}
                 <MatchesContainer
